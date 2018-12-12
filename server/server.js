@@ -15,16 +15,17 @@ app.use(bodyParser.json());
 
 app.post('/users', async (req, res) => {
 
-    console.log('request', req.body);
      try{
          const body = req.body;
-         console.log('***body***', body);
          const user = new User(body);
-         console.log('***user***', user);
          await user.save();
-         res.send(user.appFriends);
+         //res.send(user.appFriends);
+         var userIdFriends = {_id: user._id,
+                                appFriends: user.appFriends};
+         res.send(userIdFriends);
      } catch (e) {
-         res.status(400).send(e);
+         var message = {errorCode: 400, errorMessage: e.errmsg, };
+         res.status(400).send(message);
      }
 });
 
