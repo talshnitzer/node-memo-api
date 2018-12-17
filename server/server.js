@@ -11,6 +11,8 @@ const {User} = require('../models/user.js');
 const app = express();
 const port = process.env.PORT;
 
+var errorToSend = {};
+
 app.use(bodyParser.json());
 
 app.post('/users', async (req, res) => {
@@ -24,9 +26,30 @@ app.post('/users', async (req, res) => {
                                 appFriends: user.appFriends};
          res.send(userIdFriends);
      } catch (e) {
-         var message = {errorCode: 400, errorMessage: e.errmsg, };
-         res.status(400).send(message);
+        errorToSend.errorCode =  400;
+        errorToSend.errorMessage = e.errmsg;
+         res.status(errorToSend.errorCode).send(errorToSend);
      }
+});
+
+
+//Login - existing user get token and get updated
+app.post('/users/login', async (req,res)=> {
+    
+    try{
+        const body = req.body;
+        const updatedUser = await User.findOneAndUpdate({facebookId: body.facebookId},{$set: body}, {new: true});
+        if (!updatedUser) {
+            errorToSend.errorCode =  404;
+            errorToSend.errorMessage = 'User not found';
+            res.status(errorToSend.errorCode).send(errorToSend);
+        }
+        res.send({appFriends: updatedUser.appFriends, _id: updatedUser._id});
+    } catch (e) {
+        errorToSend.errorCode =  400;
+        errorToSend.errorMessage = e.errmsg;
+        res.send(400).send(errorToSend);
+    }
 });
 
 app.listen(port,() =>{
