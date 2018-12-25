@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const {mongoose} = require('../db/mongoose.js');
 const {ObjectId} = require('mongodb');
 const {User} = require('../models/user.js');
+const {Memo} = require('../models/memo');
 
 const app = express();
 const port = process.env.PORT;
@@ -14,6 +15,24 @@ const port = process.env.PORT;
 var errorToSend = {};
 
 app.use(bodyParser.json());
+
+//POST memos
+//to add authentication of user
+//add getting _creatorId from authentication method
+//add format date
+
+app.post('/memos',async (req,res)=>{
+    try{
+        var body = req.body;
+        body.date = new Date();
+        var memo = new Memo(body);
+        //memo._creator = req._creatorId;   
+        var doc = await memo.save();
+        res.send(doc);
+    }   catch (e) {
+        res.status(400).send(e);
+    }   
+});
 
 app.post('/users', async (req, res) => {
 
@@ -42,13 +61,13 @@ app.post('/users/login', async (req,res)=> {
         if (!updatedUser) {
             errorToSend.errorCode =  404;
             errorToSend.errorMessage = 'User not found';
-            res.status(errorToSend.errorCode).send(errorToSend);
+            return res.status(errorToSend.errorCode).send(errorToSend);
         }
         res.send({appFriends: updatedUser.appFriends, _id: updatedUser._id});
     } catch (e) {
         errorToSend.errorCode =  400;
         errorToSend.errorMessage = e.errmsg;
-        res.send(400).send(errorToSend);
+        res.status(400).send(errorToSend);
     }
 });
 
