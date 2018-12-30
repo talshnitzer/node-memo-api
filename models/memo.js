@@ -46,19 +46,18 @@ var MemoSchema = mongoose.Schema({
     },
     category: {
         require: true,
-        type: Number
+        type: Number,
+        min: 0,
+        max: 99
     },
     isPrivate: {
         type: Boolean,
         require: true
     },
     date: {
-        type: Number,
-        default: null
+        type: Date,
+        default: Date.now
     }
-
-
-
 });
 
 var Memo = mongoose.model('Memo', MemoSchema);

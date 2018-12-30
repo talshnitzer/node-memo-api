@@ -24,7 +24,6 @@ app.use(bodyParser.json());
 app.post('/memos',async (req,res)=>{
     try{
         var body = req.body;
-        body.date = new Date();
         var memo = new Memo(body);
         //memo._creator = req._creatorId;   
         var doc = await memo.save();

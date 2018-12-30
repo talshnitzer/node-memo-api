@@ -4,9 +4,11 @@ const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');
 const {User} = require('./../../models/user');
-const {users,populateUsers} = require('./seed/seed');
+const {Memo} = require('./../../models/memo');
+const {users,populateUsers, memos, populateMemos} = require('./seed/seed');
 
 beforeEach(populateUsers);
+beforeEach(populateMemos);
 
 describe ('POST /users', () => {
     it('Should create a new user', (done) => {
@@ -99,5 +101,57 @@ describe ('POST /users/login', () => {
             });
         }); 
 
+    });
+});
+
+
+describe ('POST /memos', () => {
+    it('Should create a new memo', (done) => {
+        var reqBody = {
+            _creatorId: "5c20b18f4230672300fe606c",
+            memoName: "BBB",
+            address: "Ma'ale Kamon St 2, Karmiel",
+            country: "Israel",
+            city: "Karmiel",
+            longitute:"32.928406",
+            latitude: "35.323580",
+            category: 1,
+            isPrivate: true
+            };
+        request(app)
+        .post('/memos')
+        .send(reqBody)
+        .expect(200)
+        .expect((res) => {
+            expect(res.body.memoName).toBe(reqBody.memoName)
+        })
+        .end((err,res) => {
+            if (err) {
+            return done(err);
+            }
+        Memo.find({memoName: reqBody.memoName}).then((memos) => {
+            expect(memos.length).toBe(1);
+            expect(memos[0].address).toBe(reqBody.address);
+            done();
+        }).catch((e) => done(e));
+        });
+    });
+    it('Should not create a memo with invalid body data',(done) => {
+        var reqBody = memos[0];
+        reqBody.category = 100;
+
+        request(app)
+        .post('/memos')
+        .send(reqBody)
+        .expect(400)
+        .end((err, res) => {
+            if (err) {
+                return done(err);
+            }
+            Memo.find().then((memos) => {
+                expect(memos.length).toBe(2);
+                done();
+            }).catch((e) => done(e));
+        });
     });
 });
