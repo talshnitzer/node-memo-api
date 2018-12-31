@@ -19,9 +19,8 @@ app.use(bodyParser.json());
 //POST memos
 //to add authentication of user
 //add getting _creatorId from authentication method
-//add format date
 
-app.post('/memos',async (req,res)=>{
+app.post('/memos/create',async (req,res)=>{
     try{
         var body = req.body;
         var memo = new Memo(body);
@@ -33,7 +32,24 @@ app.post('/memos',async (req,res)=>{
     }   
 });
 
-app.post('/users', async (req, res) => {
+//GET all my memos
+app.get('/memos/:userId', async (req,res) => {
+    try{
+        console.log('req userId***', req.params.userId);
+        var memos = await Memo.find({
+            _creatorId: req.params.userId
+        });
+        console.log('memos*******',memos);
+        if (!memos){
+            return res.status(404).send('no memos found');
+        }
+        res.send({memos});
+    } catch (e) {
+        res.status(400).send(400,e);
+    }    
+});
+
+app.post('/users/signup', async (req, res) => {
 
      try{
          const body = req.body;

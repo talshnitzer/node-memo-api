@@ -10,7 +10,7 @@ const {users,populateUsers, memos, populateMemos} = require('./seed/seed');
 beforeEach(populateUsers);
 beforeEach(populateMemos);
 
-describe ('POST /users', () => {
+describe ('POST /users/signup', () => {
     it('Should create a new user', (done) => {
         var facebookId = '100';
         var fullName = 'Tal Snitzer';
@@ -18,7 +18,7 @@ describe ('POST /users', () => {
 
 
         request(app)
-        .post('/users')
+        .post('/users/signup')
         .send({facebookId, fullName, appFriends })
         .expect(200)
         .expect((res) => {
@@ -42,7 +42,7 @@ describe ('POST /users', () => {
 
     it('it should not create new user', (done) =>{
         request(app)
-        .post('/users')
+        .post('/users/signup')
         .send(users[0])
         .expect(400)
         .end((err, res) => {
@@ -105,7 +105,7 @@ describe ('POST /users/login', () => {
 });
 
 
-describe ('POST /memos', () => {
+describe ('POST /memos/create', () => {
     it('Should create a new memo', (done) => {
         var reqBody = {
             _creatorId: "5c20b18f4230672300fe606c",
@@ -119,7 +119,7 @@ describe ('POST /memos', () => {
             isPrivate: true
             };
         request(app)
-        .post('/memos')
+        .post('/memos/create')
         .send(reqBody)
         .expect(200)
         .expect((res) => {
@@ -141,7 +141,7 @@ describe ('POST /memos', () => {
         reqBody.category = 100;
 
         request(app)
-        .post('/memos')
+        .post('/memos/create')
         .send(reqBody)
         .expect(400)
         .end((err, res) => {
