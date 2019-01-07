@@ -38,6 +38,18 @@ var UserSchema = new mongoose.Schema({
     appFriends: [String]
 });
 
+UserSchema.statics.getFriends = async function(_id) {
+    
+        var User = this;
+        var user = await User.findOne({_id});
+        if (!user) {
+            throw new Error('user not found');
+        }
+        return user.appFriends;
+    }; 
+
+
+
 const User = mongoose.model('User', UserSchema);
 
 

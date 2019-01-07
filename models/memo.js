@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
-var MemoSchema = mongoose.Schema({
+var MemoSchema = new mongoose.Schema({
     _creatorId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         require: true
     },
     memoName: {
@@ -60,5 +60,35 @@ var MemoSchema = mongoose.Schema({
     }
 });
 
+MemoSchema.statics.findMyMemos = async function(_id){
+    var Memo = this;
+    var memos = await Memo.find({
+        _creatorId: _id
+    });
+    return memos;
+};
+
+MemoSchema.statics.findUserMemos = async function(_id, isPrivate) {
+var Memo = this;
+var memos = await Memo.find({
+    _creatorId: _id,
+    isPrivate: isPrivate
+});
+console.log('findUserMemos**** memos', memos);
+return memos;
+};
+
+MemoSchema.statics.findManyUsersMemos = async function (usersIds) {
+    console.log('**findManyUsersMemos** usersIds', usersIds);
+    var friendsMemos = [];
+    for (const usersId of usersIds) {
+        const publicMemos = await Memo.findUserMemos(usersId, false);
+        console.log('**findManyUsersMemos*** publicMemos', publicMemos);
+        friendsMemos = friendsMemos.concat(publicMemos);
+    }
+    return friendsMemos;
+};
+
 var Memo = mongoose.model('Memo', MemoSchema);
+
 module.exports = {Memo};
