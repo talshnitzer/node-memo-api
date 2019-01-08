@@ -8,7 +8,7 @@ const validator = require('validator');
 // console.log('***validator', validator);
 
 var UserSchema = new mongoose.Schema({
-    facebookId: {
+    appId: {
         type: String,
         required: true,
         trim: true,
@@ -35,7 +35,8 @@ var UserSchema = new mongoose.Schema({
         trim: true,
         minlength: 1
     },
-    appFriends: [String]
+    appFriends: [String],
+    friends_id: [String]
 });
 
 UserSchema.statics.getFriends = async function(_id) {
@@ -45,7 +46,7 @@ UserSchema.statics.getFriends = async function(_id) {
         if (!user) {
             throw new Error('user not found');
         }
-        return user.appFriends;
+        return user.friends_id;
     }; 
 
 

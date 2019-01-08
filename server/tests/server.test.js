@@ -12,14 +12,14 @@ beforeEach(populateMemos);
 
 describe ('POST /users/signup', () => {
     it('Should create a new user', (done) => {
-        var facebookId = '100';
+        var appId = '100';
         var fullName = 'Tal Snitzer';
         var appFriends = ['301011240225891', '710125477'];
 
 
         request(app)
         .post('/users/signup')
-        .send({facebookId, fullName, appFriends })
+        .send({appId, fullName, appFriends })
         .expect(200)
         .expect((res) => {
             expect(res.body._id).toBeTruthy();
@@ -31,9 +31,9 @@ describe ('POST /users/signup', () => {
                 return done(err);
             }
 
-            User.findOne({facebookId}).then((user) => {
+            User.findOne({appId}).then((user) => {
                 expect(user).toBeTruthy();
-                expect(user.facebookId).toBe(facebookId);
+                expect(user.appId).toBe(appId);
                 done();
             }).catch((e) => done());
         });
@@ -64,7 +64,7 @@ describe ('POST /users/login', () => {
         var appFriends = users[0].appFriends.concat('100100');
         request(app)
         .post('/users/login')
-        .send({facebookId: users[0].facebookId, appFriends: users[0].fullName, appFriends })
+        .send({appId: users[0].appId, appFriends: appFriends })
         .expect(200)
         .expect((res) => {
             expect(res.body._id).toBeTruthy();
@@ -76,7 +76,7 @@ describe ('POST /users/login', () => {
                 return done(err);
             }
 
-            User.findOne({facebookId: users[0].facebookId}).then((user) => {
+            User.findOne({appId: users[0].appId}).then((user) => {
                 expect(user.appFriends).toEqual(appFriends);
                 done();
             }).catch((e) => done());
@@ -84,11 +84,12 @@ describe ('POST /users/login', () => {
 
     });
 
-    it('it should not create new user', (done) =>{
-        var facebookId = users[0].facebookId + '123';
+    it('it should not login/update new user', (done) =>{
+        var appId = users[0].appId.concat('123');
+        
         request(app)
         .post('/users/login')
-        .send({facebookId: facebookId})
+        .send({appId: appId, appFriends: users[0].appFriends})
         .expect(404)
         .end((err, res) => {
             if (err) {

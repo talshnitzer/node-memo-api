@@ -8,6 +8,7 @@ const {mongoose} = require('../db/mongoose.js');
 const {ObjectId} = require('mongodb');
 const {User} = require('../models/user.js');
 const {Memo} = require('../models/memo');
+const {appId2DbId} = require('./../server/middleware/conversion');
 
 const app = express();
 const port = process.env.PORT;
@@ -50,13 +51,10 @@ app.get('/allMemos/:userId', async (req,res) => {
     try{
         //find user friends
         const friends = await User.getFriends(req.params.userId);
-        console.log('friends0****',friends[0]);
         //for each of user friend find all public memos of user
         var friendsMemos = await Memo.findManyUsersMemos(friends);
-        console.log('app.get **friends memos**', friendsMemos);
         var myMemos = await Memo.findMyMemos(req.params.userId);
         var allMemos = friendsMemos.concat(myMemos);
-        console.log('app.get****my friends and my memos', allMemos);
         res.send({allMemos});
 
         } catch (e) {
@@ -65,15 +63,16 @@ app.get('/allMemos/:userId', async (req,res) => {
     });
         
         
-app.post('/users/signup', async (req, res) => {
+app.post('/users/signup', appId2DbId, async (req, res) => {
 
      try{
          const body = req.body;
          const user = new User(body);
          await user.save();
-         //res.send(user.appFriends);
          var userIdFriends = {_id: user._id,
-                                appFriends: user.appFriends};
+                                appFriends: user.appFriends,
+                                friends_id: user.friends_id
+                            };
          res.send(userIdFriends);
      } catch (e) {
         errorToSend.errorCode =  400;
@@ -84,17 +83,21 @@ app.post('/users/signup', async (req, res) => {
 
 
 //Login - existing user get token and get updated
-app.post('/users/login', async (req,res)=> {
+app.post('/users/login', appId2DbId,async (req,res)=> {
     
     try{
         const body = req.body;
-        const updatedUser = await User.findOneAndUpdate({facebookId: body.facebookId},{$set: body}, {new: true});
+        const updatedUser = await User.findOneAndUpdate({appId: body.appId},{$set: body}, {new: true});
         if (!updatedUser) {
             errorToSend.errorCode =  404;
             errorToSend.errorMessage = 'User not found';
             return res.status(errorToSend.errorCode).send(errorToSend);
         }
-        res.send({appFriends: updatedUser.appFriends, _id: updatedUser._id});
+        res.send({
+                    appFriends: updatedUser.appFriends, 
+                    _id: updatedUser._id,
+                    friends_id: updatedUser.friends_id
+                });
     } catch (e) {
         errorToSend.errorCode =  400;
         errorToSend.errorMessage = e.errmsg;

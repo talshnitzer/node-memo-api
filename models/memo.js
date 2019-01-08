@@ -79,11 +79,9 @@ return memos;
 };
 
 MemoSchema.statics.findManyUsersMemos = async function (usersIds) {
-    console.log('**findManyUsersMemos** usersIds', usersIds);
     var friendsMemos = [];
     for (const usersId of usersIds) {
         const publicMemos = await Memo.findUserMemos(usersId, false);
-        console.log('**findManyUsersMemos*** publicMemos', publicMemos);
         friendsMemos = friendsMemos.concat(publicMemos);
     }
     return friendsMemos;

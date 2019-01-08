@@ -8,12 +8,12 @@ const userTwoId = new ObjectId();
 
 const users = [{
     _id: userOneId,
-    facebookId: '100011240225477',
+    appId: '100011240225477',
     fullName: 'Tal Snitzer',
     appFriends: ['301011240225891', '710125477']
 }, {
     _id: userTwoId,
-    facebookId: '50101230225478',
+    appId: '50101230225478',
     fullName: 'Galit Shalev',
     appFriends: ['301011240225891', '710125477', '80887909490'],
     email: 'TreeWalker.shnitzer@SpeechGrammarList.com',
