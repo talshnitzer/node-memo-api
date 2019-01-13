@@ -74,7 +74,6 @@ var memos = await Memo.find({
     _creatorId: _id,
     isPrivate: isPrivate
 });
-console.log('findUserMemos**** memos', memos);
 return memos;
 };
 

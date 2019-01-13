@@ -37,9 +37,6 @@ app.post('/memos/create',async (req,res)=>{
 app.get('/memos/:userId', async (req,res) => {
     try{
         var memos = await Memo.findMyMemos(req.params.userId);
-        if (memos.length === 0){
-            return res.status(404).send('no memos found');
-        }
         res.send({memos});
     } catch (e) {
         res.status(400).send(400,e);
@@ -53,9 +50,9 @@ app.get('/allMemos/:userId', async (req,res) => {
         const friends = await User.getFriends(req.params.userId);
         //for each of user friend find all public memos of user
         var friendsMemos = await Memo.findManyUsersMemos(friends);
-        var myMemos = await Memo.findMyMemos(req.params.userId);
-        var allMemos = friendsMemos.concat(myMemos);
-        res.send({allMemos});
+        // var myMemos = await Memo.findMyMemos(req.params.userId);
+        // var allMemos = friendsMemos.concat(myMemos);
+        res.send({friendsMemos});
 
         } catch (e) {
             res.status(400).send(e);

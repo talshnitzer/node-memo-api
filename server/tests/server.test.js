@@ -51,7 +51,7 @@ describe ('POST /users/signup', () => {
             }
 
             User.find({}).then((users) => {
-                expect(users.length).toBe(2);
+                expect(users.length).toBe(3);
                 done();
             });
         }); 
@@ -97,7 +97,7 @@ describe ('POST /users/login', () => {
             }
 
             User.find({}).then((users) => {
-                expect(users.length).toBe(2);
+                expect(users.length).toBe(3);
                 done();
             });
         }); 
@@ -138,9 +138,18 @@ describe ('POST /memos/create', () => {
         });
     });
     it('Should not create a memo with invalid body data',(done) => {
-        var reqBody = memos[0];
-        reqBody.category = 100;
-
+        
+        var reqBody = {
+            _creatorId: "5c20b18f4230672300fe606c",
+            memoName: "BBB",
+            address: "Ma'ale Kamon St 2, Karmiel",
+            country: "Israel",
+            city: "Karmiel",
+            longitute:"32.928406",
+            latitude: "35.323580",
+            category: 100,
+            isPrivate: true
+            };
         request(app)
         .post('/memos/create')
         .send(reqBody)
@@ -150,9 +159,40 @@ describe ('POST /memos/create', () => {
                 return done(err);
             }
             Memo.find().then((memos) => {
-                expect(memos.length).toBe(2);
+                expect(memos.length).toBe(3);
                 done();
             }).catch((e) => done(e));
         });
     });
 });
+
+ describe ('GET /memos/:userId', () => {
+    it ('Should return all user memos', (done) => {
+        request(app)
+        .get(`/memos/${users[0]._id.toHexString()}`)
+        .expect(200)
+        .expect((res) => {
+            expect(res.body.memos[0]._creatorId).toBe(users[0]._id.toHexString());
+        })
+        .end(done)
+    });  
+    // it ('Should return an error when user doesnt exist', (done) => {
+    //     request(app)
+    //     .get(`/memos/${users[0].appId}`)
+    //     .expect(404)
+    //     .end(done)
+    // });  
+ });
+
+ describe ('GET /allMemos/:userId', () => {
+    it (`Should return all user memos and user's friends memos`, (done) => {
+        request(app)
+        .get(`/allMemos/${users[0]._id.toHexString()}`)
+        .expect(200)
+        .expect((res) => {
+            expect(res.body.friendsMemos.length).toBe(2);
+            expect(users[0].friends_id.toString()).toContain(res.body.friendsMemos[0]._creatorId.toString());
+        })
+        .end(done)
+    });   
+ });
