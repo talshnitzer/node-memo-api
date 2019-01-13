@@ -60,27 +60,44 @@ var MemoSchema = new mongoose.Schema({
     }
 });
 
-MemoSchema.statics.findMyMemos = async function(_id){
+MemoSchema.statics.findMyMemos = async function(_id, category){
     var Memo = this;
-    var memos = await Memo.find({
-        _creatorId: _id
-    });
+    if (!category) {
+        var memos = await Memo.find({
+            _creatorId: _id
+        });
+    } else {
+        var memos = await Memo.find({
+            _creatorId: _id,
+            category: category
+        });
+    }
+    
     return memos;
 };
 
-MemoSchema.statics.findUserMemos = async function(_id, isPrivate) {
+MemoSchema.statics.findUserMemos = async function(_id, isPrivate, category) {
 var Memo = this;
-var memos = await Memo.find({
-    _creatorId: _id,
-    isPrivate: isPrivate
-});
+if (!category) {
+    var memos = await Memo.find({
+        _creatorId: _id,
+        isPrivate: isPrivate
+    });
+} else {
+    var memos = await Memo.find({
+        _creatorId: _id,
+        isPrivate: isPrivate,
+        category: category
+    });
+}
+
 return memos;
 };
 
-MemoSchema.statics.findManyUsersMemos = async function (usersIds) {
+MemoSchema.statics.findManyUsersMemos = async function (usersIds, category) {
     var friendsMemos = [];
     for (const usersId of usersIds) {
-        const publicMemos = await Memo.findUserMemos(usersId, false);
+        const publicMemos = await Memo.findUserMemos(usersId, false, category);
         friendsMemos = friendsMemos.concat(publicMemos);
     }
     return friendsMemos;
