@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 var MemoSchema = new mongoose.Schema({
     _creatorId: {
-        type: String,
+        type: [String],
         require: true
     },
     memoName: {
@@ -35,11 +35,11 @@ var MemoSchema = new mongoose.Schema({
         type: Number        
     },
     memoText: {
-        type: String,
+        type: [String],
         trim: true
     },
     image: {
-        type: String
+        type: [String]
     },
     phoneNum: {
 
@@ -57,6 +57,10 @@ var MemoSchema = new mongoose.Schema({
     date: {
         type: Date,
         default: Date.now
+    },
+    placeId: {
+        type: String,
+        trim: true
     }
 });
 
@@ -102,6 +106,28 @@ MemoSchema.statics.findManyUsersMemos = async function (usersIds, category) {
     }
     return friendsMemos;
 };
+
+
+//Merging memos with same placeId after each new memo save
+MemoSchema.post('save', async function () {
+    var memo = this;
+    if (memo.isPrivate === false) {
+        var merged_memo = await Memo.findOneAndUpdate({placeId: memo.placeId,
+                    category: memo.category,
+                    _id: {$ne: memo._id },
+                    isPrivate: false
+                    },
+        {
+        $push: {"_creatorId": memo._creatorId,
+            "memoText": memo.memoText,
+            "image": memo.image
+            }
+        }, {new: true});
+        if (merged_memo) {await Memo.remove(memo);}
+
+    }   
+}); 
+
 
 var Memo = mongoose.model('Memo', MemoSchema);
 

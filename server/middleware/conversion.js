@@ -10,6 +10,8 @@ var appId2DbId =  async (req,res,next) => {
             const user = await User.findOne({appId: appFriend});
             if (user){
                 friends_id.push(user._id);
+            } else {
+                friends_id.push('0');
             }
         }
         req.body.friends_id = friends_id;    //add array of friends_Id to req

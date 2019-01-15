@@ -159,7 +159,7 @@ describe ('POST /memos/create', () => {
                 return done(err);
             }
             Memo.find().then((memos) => {
-                expect(memos.length).toBe(3);
+                expect(memos.length).toBe(6);
                 done();
             }).catch((e) => done(e));
         });
@@ -172,16 +172,22 @@ describe ('POST /memos/create', () => {
         .get(`/memos/${users[0]._id.toHexString()}`)
         .expect(200)
         .expect((res) => {
-            expect(res.body.memos[0]._creatorId).toBe(users[0]._id.toHexString());
+            expect(res.body.memos[0]._creatorId).toContain(users[0]._id.toHexString());
+            expect(res.body.memos.length).toBe(2);
         })
         .end(done)
     });  
-    // it ('Should return an error when user doesnt exist', (done) => {
-    //     request(app)
-    //     .get(`/memos/${users[0].appId}`)
-    //     .expect(404)
-    //     .end(done)
-    // });  
+    it ('Should return user memos with category 1', (done) => {
+        request(app)
+        .get(`/memos/${users[0]._id.toHexString()}?category=1`)
+        .expect(200)
+        .expect((res) => {
+            expect(res.body.memos[0]._creatorId).toContain(users[0]._id.toHexString());
+            expect(res.body.memos.length).toBe(1);
+        })
+        .end(done)
+    });  
+     
  });
 
  describe ('GET /allMemos/:userId', () => {
@@ -190,9 +196,20 @@ describe ('POST /memos/create', () => {
         .get(`/allMemos/${users[0]._id.toHexString()}`)
         .expect(200)
         .expect((res) => {
-            expect(res.body.friendsMemos.length).toBe(2);
+            expect(res.body.friendsMemos.length).toBe(4);
             expect(users[0].friends_id.toString()).toContain(res.body.friendsMemos[0]._creatorId.toString());
         })
         .end(done)
     });   
+
+    it (`Should return all user's friends memos with category 2`, (done) => {
+        request(app)
+        .get(`/allMemos/${users[0]._id.toHexString()}?category=2`)
+        .expect(200)
+        .expect((res) => {
+            expect(res.body.friendsMemos.length).toBe(2);
+            expect(users[0].friends_id.toString()).toContain(res.body.friendsMemos[0]._creatorId.toString());
+        })
+        .end(done)
+    });
  });
