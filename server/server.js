@@ -45,21 +45,45 @@ app.get('/memos/:userId', async (req,res) => {
 });
 
 //GET all  my friends memos
+// app.get('/allMemos/:userId', async (req,res) => {
+//     try{
+//         const {category} = req.query;
+//         //find user friends
+//         const friends = await User.getFriends(req.params.userId);
+//         //for each of user friend find all public memos of user
+//         var friendsMemos = await Memo.findManyUsersMemos(friends, category);
+//         // var myMemos = await Memo.findMyMemos(req.params.userId);
+//         // var allMemos = friendsMemos.concat(myMemos);
+//         res.send({friendsMemos});
+
+//         } catch (e) {
+//             res.status(400).send(e);
+//         }
+//     });
+
+    //GET my friends memos, around geopoint
 app.get('/allMemos/:userId', async (req,res) => {
     try{
-        const {category} = req.query;
+        const {category,lat,long,distance} = req.query;
+       
         //find user friends
         const friends = await User.getFriends(req.params.userId);
-        //for each of user friend find all public memos of user
-        var friendsMemos = await Memo.findManyUsersMemos(friends, category);
-        // var myMemos = await Memo.findMyMemos(req.params.userId);
-        // var allMemos = friendsMemos.concat(myMemos);
+        if (!lat || !long){
+            //for each of user friend find all public memos of user
+            var friendsMemos = await Memo.findManyUsersMemos(friends, category);
+        } else {
+            //for each of user friends find all public memos in 'distance' from 'long,lat' point
+            console.log('found lat and long');
+            var friendsMemos = await Memo.findMemosByGeopoint(friends, category, lat, long, distance);
+            console.log('***friendsMemos in server.js***' , friendsMemos);
+        }
         res.send({friendsMemos});
 
         } catch (e) {
             res.status(400).send(e);
         }
     });
+    
         
         
 app.post('/users/signup', appId2DbId, async (req, res) => {
