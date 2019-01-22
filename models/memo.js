@@ -151,21 +151,10 @@ MemoSchema.statics.findManyUsersMemos = async function (usersIds, category) {
     return friendsMemos;
 };
 
-MemoSchema.statics.findMemosByGeopoint = async function (usersIds, category, lat, long, distance) {
-    console.log(`***invoked findMemosByGeopoint*** inputs: userIds: ${usersIds}
-    , category: ${category}, lat: ${lat}, long: ${long}, distance: ${distance}`);
-    var friendsMemos = [];
-    var isPrivate = false;
-    for (const usersId of usersIds) {
-        const publicMemos = await Memo.findUserMemosByGeopoint(usersId, isPrivate, category,lat,long, distance);
-        friendsMemos = friendsMemos.concat(publicMemos);
-    }
-    return friendsMemos;
-};
 
 //find all user public memos within the distance from the given Geopoint. category optional. 
-MemoSchema.statics.findUserMemosByGeopoint = async function(_id, isPrivate, category,lat,long, distance) {
-    console.log(`***invoked findUserMemosByGeopoint*** inputs: userId: ${_id}
+MemoSchema.statics.findMemosByGeopoint = async function(usersIds, category,lat,long, distance, isPrivate) {
+    console.log(`***invoked findUserMemosByGeopoint*** inputs: usersId: ${usersIds}
     , category: ${category}, lat: ${lat}, long: ${long}, distance: ${distance}`);
     var Memo = this;
     try {
@@ -185,14 +174,14 @@ MemoSchema.statics.findUserMemosByGeopoint = async function(_id, isPrivate, cate
 
     if (!category) {
         var memos = await Memo.find({
-            _creatorId: _id,
+            _creatorId: {$in: usersIds},
             isPrivate: isPrivate,
             longitute: {$gte: locationBbox.SElong, $lte: locationBbox.NWlong},
             latitude: {$gte: locationBbox.SElat, $lte: locationBbox.NWlat}
         });
     } else {
         var memos = await Memo.find({
-            _creatorId: _id,
+            _creatorId: {$in: usersIds},
             isPrivate: isPrivate,
             category: category,
             longitute: {$gte: locationBbox.SElong, $lte: locationBbox.NWlong},
