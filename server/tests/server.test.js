@@ -159,7 +159,7 @@ describe ('POST /memos/create', () => {
                 return done(err);
             }
             Memo.find().then((memos) => {
-                expect(memos.length).toBe(6);
+                expect(memos.length).toBe(10);
                 done();
             }).catch((e) => done(e));
         });
@@ -173,7 +173,7 @@ describe ('POST /memos/create', () => {
         .expect(200)
         .expect((res) => {
             expect(res.body.memos[0]._creatorId).toContain(users[0]._id.toHexString());
-            expect(res.body.memos.length).toBe(2);
+            expect(res.body.memos.length).toBe(3);
         })
         .end(done)
     });  
@@ -183,7 +183,7 @@ describe ('POST /memos/create', () => {
         .expect(200)
         .expect((res) => {
             expect(res.body.memos[0]._creatorId).toContain(users[0]._id.toHexString());
-            expect(res.body.memos.length).toBe(1);
+            expect(res.body.memos.length).toBe(2);
         })
         .end(done)
     });  
@@ -191,12 +191,12 @@ describe ('POST /memos/create', () => {
  });
 
  describe ('GET /allMemos/:userId', () => {
-    it (`Should return all user memos and user's friends memos`, (done) => {
+    it (`Should return all user's friends memos`, (done) => {
         request(app)
         .get(`/allMemos/${users[0]._id.toHexString()}`)
         .expect(200)
         .expect((res) => {
-            expect(res.body.friendsMemos.length).toBe(4);
+            expect(res.body.friendsMemos.length).toBe(7);
             expect(users[0].friends_id.toString()).toContain(res.body.friendsMemos[0]._creatorId.toString());
         })
         .end(done)
@@ -209,6 +209,22 @@ describe ('POST /memos/create', () => {
         .expect((res) => {
             expect(res.body.friendsMemos.length).toBe(2);
             expect(users[0].friends_id.toString()).toContain(res.body.friendsMemos[0]._creatorId.toString());
+        })
+        .end(done)
+    });
+
+    it (`Should return all user's friends memos with category 1 and around location within distance`, (done) => {
+        var location = {
+                        long: 35.323596,
+                        lat: 32.926822
+                        };
+        var distance = 0.3;
+        request(app)
+        .get(`/allMemos/${users[0]._id.toHexString()}?category=1&&long=${location.long}&&lat=${location.lat}&&distance=${distance}`)
+        .expect(200)
+        .expect((res) => {
+            expect(res.body.friendsMemos.length).toBe(1);
+            expect(res.body.friendsMemos[0].memoName).toBe("American Eagle Outfitters");
         })
         .end(done)
     });

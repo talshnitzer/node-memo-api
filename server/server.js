@@ -24,9 +24,39 @@ app.use(bodyParser.json());
 app.post('/memos/create',async (req,res)=>{
     try{
         var body = req.body;
-        var memo = new Memo(body);
-        //memo._creator = req._creatorId;   
+        var memo = new Memo(body);   
         var doc = await memo.save();
+        res.send(doc);
+    }   catch (e) {
+        res.status(400).send(e);
+    }   
+});
+//DELETE memo
+app.post('/memos/delete',async (req,res)=>{
+    try{
+        var reqMemoId = req.body._id;
+        var req_creatorId = req.body._creatorId;
+        if(!ObjectId.isValid(reqMemoId)){
+            return res.status(404).send();
+        }
+         //find memo
+         var memo = await Memo.findOne({
+                _id: reqMemoId,
+                _creatorId: req_creatorId
+            });
+        if (!memo) {
+                return res.status(404).send('memo not found');
+        }
+         //if not convereged - delete from DB
+        if (memo._creatorId.length === 1) {
+            console.log('***/memos/delete*** memo has 1 creator');
+            await Memo .deleteOne(memo);
+            return res.send(memo);
+        }
+         //if convereged memo - find it's place in array by finding _creatorId
+         //delete only array items in this place
+         var doc = memo.removeFromMemo(req_creatorId); 
+         console.log('***/memos/delete*** memo has several creators removed items:',doc);     
         res.send(doc);
     }   catch (e) {
         res.status(400).send(e);
@@ -68,6 +98,7 @@ app.get('/allMemos/:userId', async (req,res) => {
        
         //find user friends
         const friends = await User.getFriends(req.params.userId);
+        console.log('***friends***',friends );
         if (!lat || !long){
             //for each of user friend find all public memos of user
             var friendsMemos = await Memo.findManyUsersMemos(friends, category);
@@ -105,7 +136,7 @@ app.post('/users/signup', appId2DbId, async (req, res) => {
 });
 
 
-//Login - existing user get token and get updated
+//Login - existing user  get updated
 app.post('/users/login', appId2DbId,async (req,res)=> {
     
     try{

@@ -65,6 +65,29 @@ var MemoSchema = new mongoose.Schema({
     }
 });
 
+MemoSchema.methods.removeFromMemo =  function (_creatorId) {
+    try{
+        var memo = this;
+        var removedItems = [];
+        console.log('***removeFromMemo*** memo:', memo);
+        var creatorIndex = memo._creatorId.indexOf(_creatorId);
+        console.log('***removeFromMemo*** creatorIndex:', creatorIndex);
+        if (creatorIndex === -1) {
+            throw new Error('the creator is not found in the memo');
+        }
+        removedItems[0] = memo._creatorId.splice(creatorIndex, 1);
+        removedItems[1] = memo.text.splice(creatorIndex, 1);
+        removedItems[2] = memo.image.splice(creatorIndex, 1);
+        removedItems[3] = memo.date.splice(creatorIndex, 1);
+        console.log('***removeFromMemo*** removedItems:', removedItems);
+        return removedItems;
+
+    } catch (e) {
+        return e;
+    }
+    
+};
+
 MemoSchema.statics.findMyMemos = async function(_id, category){
     var Memo = this;
     if (!category) {
@@ -99,13 +122,32 @@ if (!category) {
 return memos;
 };
 
+// MemoSchema.statics.findManyUsersMemos = async function (usersIds, category) {
+//     var friendsMemos = [];
+//     var isPrivate = false
+//     for (const usersId of usersIds) {
+//         const publicMemos = await Memo.findUserMemos(usersId, isPrivate, category);
+//         friendsMemos = friendsMemos.concat(publicMemos);
+//     }
+//     return friendsMemos;
+// };
+
 MemoSchema.statics.findManyUsersMemos = async function (usersIds, category) {
     var friendsMemos = [];
     var isPrivate = false
-    for (const usersId of usersIds) {
-        const publicMemos = await Memo.findUserMemos(usersId, isPrivate, category);
-        friendsMemos = friendsMemos.concat(publicMemos);
-    }
+    console.log('***usersId***', usersIds)
+    if (!category) {
+        friendsMemos = await Memo.find({
+            isPrivate: false,
+            _creatorId: {$in: usersIds}
+        });
+    } else {
+        friendsMemos = await Memo.find({
+            category: category,
+            isPrivate: false,
+            _creatorId: {$in: usersIds}
+        });
+    }   
     return friendsMemos;
 };
 

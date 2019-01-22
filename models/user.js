@@ -44,7 +44,8 @@ UserSchema.statics.getFriends = async function(_id) {
         var User = this;
         var user = await User.findOne({_id});
         if (!user) {
-            throw new Error('user not found');
+            console.log('***user not found');
+            throw new Error('user not found');    
         }
         return user.friends_id;
     }; 
