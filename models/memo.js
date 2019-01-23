@@ -76,14 +76,15 @@ MemoSchema.methods.removeFromMemo =  function (_creatorId) {
             throw new Error('the creator is not found in the memo');
         }
         removedItems[0] = memo._creatorId.splice(creatorIndex, 1);
-        removedItems[1] = memo.text.splice(creatorIndex, 1);
+        removedItems[1] = memo.memoText.splice(creatorIndex, 1);
         removedItems[2] = memo.image.splice(creatorIndex, 1);
         removedItems[3] = memo.date.splice(creatorIndex, 1);
         console.log('***removeFromMemo*** removedItems:', removedItems);
+        memo.save();
         return removedItems;
 
     } catch (e) {
-        return e;
+        throw e;
     }
     
 };

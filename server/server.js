@@ -37,7 +37,7 @@ app.post('/memos/delete',async (req,res)=>{
         var reqMemoId = req.body._id;
         var req_creatorId = req.body._creatorId;
         if(!ObjectId.isValid(reqMemoId)){
-            return res.status(404).send();
+            return res.status(404).send('memo Id not valid');
         }
          //find memo
          var memo = await Memo.findOne({
@@ -50,7 +50,12 @@ app.post('/memos/delete',async (req,res)=>{
          //if not convereged - delete from DB
         if (memo._creatorId.length === 1) {
             console.log('***/memos/delete*** memo has 1 creator');
-            await Memo .deleteOne(memo);
+            try {
+                await Memo.deleteOne({_id: reqMemoId});
+            } catch (e) {
+                throw e;
+            }
+            
             return res.send(memo);
         }
          //if convereged memo - find it's place in array by finding _creatorId
