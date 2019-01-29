@@ -89,6 +89,73 @@ MemoSchema.methods.removeFromMemo =  function (_creatorId) {
     
 };
 
+MemoSchema.methods.updateMemo = async function (body) {
+    var memo = this;
+     
+    if (body.memoText) {memo.memoText = body.memoText};
+    if (body.image) {memo.image = body.image};
+    if (body.isPrivate) {memo.isPrivate = body.isPrivate};
+    memo.date = body.date;
+    console.log('***memo.date, body.date', memo.date, body.date);
+    var updatedMemo = await memo.save(); 
+    console.log('***updateMemo***', updatedMemo);
+    return updatedMemo;
+}; 
+
+MemoSchema.methods.updateConvergeMemo = async function (body) {
+    try {
+        var memo = this;
+
+        var creatorIndex = memo._creatorId.indexOf(body._creatorId);
+        console.log('***updateConvergeMemo*** creatorIndex:', creatorIndex);
+        if (creatorIndex === -1) {
+            throw new Error('the creator is not found in the memo');
+        }
+        //update non private memo
+        if (body.isPrivate === false || body.isPrivate === undefined) {
+            if (body.memoText) {memo.memoText[creatorIndex] = body.memoText};
+            if (body.image) {memo.image[creatorIndex] = body.image};
+            memo.date[creatorIndex] = body.date;
+            memo.markModified('image');
+            memo.markModified('memoText');
+            try {
+                var updatedMemo = await memo.save(); 
+            } catch (e) {
+                console.log('***updateConvergeMemo*** save error: ', e);
+            }
+            
+            console.log('***updateMemo***', updatedMemo);
+            return updatedMemo;
+        }; 
+        //update peivate memo - remove it from the converged memo and create a new memo with the creator updates
+        var newBody = {};
+        newBody.memoName = memo.memoName;
+        newBody.address = memo.address;
+        newBody. country = memo.country;
+        newBody.city = memo.city;
+        newBody.longitute = memo.longitute;
+        newBody.latitude = memo.latitude
+        newBody.phoneNum = memo.phoneNum;
+        newBody.category = memo.category;
+        newBody.placeId = memo.placeId;
+        newBody._creatorId = body._creatorId;
+        newBody.memoText = body.memoText || memo.memoText[creatorIndex];
+        newBody.image = body.image || memo.image[creatorIndex];
+        newBody.isPrivate = true;
+        var newMemo = new Memo(newBody); 
+        memo.removeFromMemo(body._creatorId);
+        try {
+            var updatedMemo = await newMemo.save();
+        }  catch (e) {
+            console.log('***updateConvergeMemo*** save error: ', e);
+        }   
+        return updatedMemo;
+    } catch (e) {
+        return e;
+    }       
+}; 
+    
+
 MemoSchema.statics.findMyMemos = async function(_id, category){
     var Memo = this;
     if (!category) {

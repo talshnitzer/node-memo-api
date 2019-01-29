@@ -68,6 +68,40 @@ app.post('/memos/delete',async (req,res)=>{
     }   
 });
 
+//UPDATE memo
+app.post('/memos/update',async (req,res)=>{
+    try{
+        const body = req.body;
+        body.date = new Date();
+        console.log('***.memos/update/ body***', body);
+    
+        if(!ObjectId.isValid(body._id)){
+            return res.status(404).send('memo Id not valid');
+        }
+         //find memo
+         await Memo.findOne({
+                _id: body._id,
+                _creatorId: body._creatorId
+            },(err, memo)=>{
+                if (err || !memo ) {
+                    return  res.status(404).send('memo not found');
+                }
+                if (memo._creatorId.length === 1) {
+                    memo.updateMemo(body).then((updatedMemo) => {
+                        res.send(updatedMemo);
+                    });     
+                } else {
+                    memo.updateConvergeMemo(body).then((updatedMemo) => {
+                        res.send(updatedMemo);
+                    });   
+                }
+            });
+
+    }   catch (e) {
+        res.status(400).send(e);
+    }   
+});
+
 //GET all my memos
 app.get('/memos/:userId', async (req,res) => {
     try{
