@@ -165,7 +165,7 @@ MemoSchema.statics.findMyMemos = async function(_id, category){
     } else {
         var memos = await Memo.find({
             _creatorId: _id,
-            category: category
+            category: {$in: category}
         });
     }
     

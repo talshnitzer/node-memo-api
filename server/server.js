@@ -105,11 +105,12 @@ app.post('/memos/update',async (req,res)=>{
 //GET all my memos
 app.get('/memos/:userId', async (req,res) => {
     try{
-        const {category} = req.query;
+        const categoryString = req.query.category;
+        category = categoryString? categoryString.split(',') : categoryString;
         var memos = await Memo.findMyMemos(req.params.userId, category);
         res.send({memos});
     } catch (e) {
-        res.status(400).send(400,e);
+        res.status(400).send(e);
     }    
 });
 
