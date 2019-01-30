@@ -200,20 +200,29 @@ return memos;
 //     return friendsMemos;
 // };
 
-MemoSchema.statics.findManyUsersMemos = async function (usersIds, category) {
+MemoSchema.statics.findManyUsersMemos = async function (usersIds, category, myId) {
     var friendsMemos = [];
     var isPrivate = false
     console.log('***usersId***', usersIds)
     if (!category) {
         friendsMemos = await Memo.find({
-            isPrivate: false,
-            _creatorId: {$in: usersIds}
+            $or: [
+                {isPrivate: false,
+                _creatorId: {$in: usersIds}},
+                {_creatorId: myId}
+            ]    
         });
     } else {
         friendsMemos = await Memo.find({
-            category: category,
-            isPrivate: false,
-            _creatorId: {$in: usersIds}
+            $or: [
+                {category: {$in: category},
+                isPrivate: false,
+                _creatorId: {$in: usersIds}},
+                {
+                _creatorId: myId,
+                category: {$in: category}
+                }
+            ]  
         });
     }   
     return friendsMemos;
@@ -221,7 +230,7 @@ MemoSchema.statics.findManyUsersMemos = async function (usersIds, category) {
 
 
 //find all user public memos within the distance from the given Geopoint. category optional. 
-MemoSchema.statics.findMemosByGeopoint = async function(usersIds, category,lat,long, distance, isPrivate) {
+MemoSchema.statics.findMemosByGeopoint = async function(usersIds, category,lat,long, distance, isPrivate, myId) {
     console.log(`***invoked findUserMemosByGeopoint*** inputs: usersId: ${usersIds}
     , category: ${category}, lat: ${lat}, long: ${long}, distance: ${distance}`);
     var Memo = this;
@@ -242,21 +251,40 @@ MemoSchema.statics.findMemosByGeopoint = async function(usersIds, category,lat,l
 
     if (!category) {
         var memos = await Memo.find({
-            _creatorId: {$in: usersIds},
-            isPrivate: isPrivate,
-            longitute: {$gte: locationBbox.SElong, $lte: locationBbox.NWlong},
-            latitude: {$gte: locationBbox.SElat, $lte: locationBbox.NWlat}
+            $or: [
+                {
+                    _creatorId: {$in: usersIds},
+                    isPrivate: isPrivate,
+                    longitute: {$gte: locationBbox.SElong, $lte: locationBbox.NWlong},
+                    latitude: {$gte: locationBbox.SElat, $lte: locationBbox.NWlat}
+                },
+                {
+                    _creatorId: {myId},
+                    longitute: {$gte: locationBbox.SElong, $lte: locationBbox.NWlong},
+                    latitude: {$gte: locationBbox.SElat, $lte: locationBbox.NWlat}
+                } 
+            ]
+            
         });
     } else {
         var memos = await Memo.find({
-            _creatorId: {$in: usersIds},
-            isPrivate: isPrivate,
-            category: category,
-            longitute: {$gte: locationBbox.SElong, $lte: locationBbox.NWlong},
-            latitude: {$gte: locationBbox.SElat, $lte: locationBbox.NWlat}
+            $or: [
+                {
+                    _creatorId: {$in: usersIds},
+                    isPrivate: isPrivate,
+                    category: category,
+                    longitute: {$gte: locationBbox.SElong, $lte: locationBbox.NWlong},
+                    latitude: {$gte: locationBbox.SElat, $lte: locationBbox.NWlat}
+                },
+                {
+                    _creatorId: myId,
+                    category: category,
+                    longitute: {$gte: locationBbox.SElong, $lte: locationBbox.NWlong},
+                    latitude: {$gte: locationBbox.SElat, $lte: locationBbox.NWlat}
+                }
+            ]   
         });
-    }
-    
+    }    
     return memos;
     };
 

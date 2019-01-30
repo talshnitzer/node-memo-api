@@ -191,24 +191,27 @@ describe ('POST /memos/create', () => {
  });
 
  describe ('GET /allMemos/:userId', () => {
-    it (`Should return all user's friends memos`, (done) => {
+    it (`Should return all user's memos and friends memos`, (done) => {
         request(app)
         .get(`/allMemos/${users[0]._id.toHexString()}`)
         .expect(200)
         .expect((res) => {
-            expect(res.body.friendsMemos.length).toBe(7);
-            expect(users[0].friends_id.toString()).toContain(res.body.friendsMemos[0]._creatorId.toString());
+            expect(res.body.friendsMemos.length).toBe(10);
+            const userIdAndFriends = users[0].friends_id.toString().concat(users[0]._id.toString());
+            expect(userIdAndFriends).toContain(res.body.friendsMemos[0]._creatorId.toString());
+            //expect(users[0].friends_id.toString()).toContain(res.body.friendsMemos[0]._creatorId.toString());
         })
         .end(done)
     });   
 
-    it (`Should return all user's friends memos with category 2`, (done) => {
+    it (`Should return all user's and friends memos with category 2`, (done) => {
         request(app)
         .get(`/allMemos/${users[0]._id.toHexString()}?category=2`)
         .expect(200)
         .expect((res) => {
-            expect(res.body.friendsMemos.length).toBe(2);
-            expect(users[0].friends_id.toString()).toContain(res.body.friendsMemos[0]._creatorId.toString());
+            expect(res.body.friendsMemos.length).toBe(3);
+            const userIdAndFriends = users[0].friends_id.toString().concat(users[0]._id.toString());
+            expect(userIdAndFriends).toContain(res.body.friendsMemos[0]._creatorId.toString());
         })
         .end(done)
     });
@@ -223,8 +226,8 @@ describe ('POST /memos/create', () => {
         .get(`/allMemos/${users[0]._id.toHexString()}?category=1&&long=${location.long}&&lat=${location.lat}&&distance=${distance}`)
         .expect(200)
         .expect((res) => {
-            expect(res.body.friendsMemos.length).toBe(1);
-            expect(res.body.friendsMemos[0].memoName).toBe("American Eagle Outfitters");
+            expect(res.body.friendsMemos.length).toBe(3);
+            expect(res.body.friendsMemos[0].memoName).not.toBe("home centre");
         })
         .end(done)
     });
