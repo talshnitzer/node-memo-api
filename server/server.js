@@ -9,6 +9,7 @@ const {ObjectId} = require('mongodb');
 const {User} = require('../models/user.js');
 const {Memo} = require('../models/memo');
 const {appId2DbId} = require('./../server/middleware/conversion');
+const {categories} = require('./../models/category.js')
 
 const app = express();
 const port = process.env.PORT;
@@ -56,13 +57,13 @@ app.post('/memos/delete',async (req,res)=>{
                 throw e;
             }
             
-            return res.send(memo);
+            return res.send({});
         }
          //if convereged memo - find it's place in array by finding _creatorId
          //delete only array items in this place
-         var doc = memo.removeFromMemo(req_creatorId); 
+         memo.removeFromMemo(req_creatorId); 
          console.log('***/memos/delete*** memo has several creators removed items:',doc);     
-        res.send(doc);
+        res.send({});
     }   catch (e) {
         res.status(400).send(e);
     }   
@@ -170,7 +171,8 @@ app.post('/users/signup', appId2DbId, async (req, res) => {
          await user.save();
          var userIdFriends = {_id: user._id,
                                 appFriends: user.appFriends,
-                                friends_id: user.friends_id
+                                friends_id: user.friends_id,
+                                categories: categories
                             };
          res.send(userIdFriends);
      } catch (e) {
