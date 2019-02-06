@@ -45,6 +45,10 @@ var MemoSchema = new mongoose.Schema({
     phoneNum: {
 
     },
+    website: {
+        type: String,
+        trim: true
+    },
     category: {
         require: true,
         type: Number,

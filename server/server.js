@@ -132,6 +132,7 @@ app.get('/memos/:userId', async (req,res) => {
 //         }
 //     });
 
+
     //GET my friends and my memos, around geopoint
 app.get('/allMemos/:userId', async (req,res) => {
     try{
@@ -139,6 +140,8 @@ app.get('/allMemos/:userId', async (req,res) => {
         const lat = req.query.lat;
         const long = req.query.long;
         const distance = req.query.distance;
+        var next = req.query.next;
+        var limit = req.query.limit;
         console.log(`category ${category}, lat ${lat}, long ${long}, distance ${distance}`);
         const isPrivate = false;
        

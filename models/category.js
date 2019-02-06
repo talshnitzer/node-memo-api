@@ -49,6 +49,7 @@ var CategorySchema = new mongoose.Schema({
 });
 
 const Category = mongoose.model('Category', CategorySchema);
+Category.createIndexes();
 const categories = [
     {
         Code: "1",

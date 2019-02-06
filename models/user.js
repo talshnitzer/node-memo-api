@@ -13,7 +13,8 @@ var UserSchema = new mongoose.Schema({
         required: true,
         trim: true,
         minlength: 1,
-        unique: true
+        unique: true,
+        dropDups: true 
     },
     fullName: {
         type: String,
@@ -53,6 +54,14 @@ UserSchema.statics.getFriends = async function(_id) {
 
 
 const User = mongoose.model('User', UserSchema);
+// mongoose.connection.db.collection('userCollection').insert({
+//     username: 'user1',
+//     firstName: 'Steve',
+//     lastName: 'LastName', 
+//   });
 
-
+// Model_name.collection.insertMany(array, { ordered: false },function(err, success){
+//     console.log(success);
+// });
+User.createIndexes();
 module.exports = {User};

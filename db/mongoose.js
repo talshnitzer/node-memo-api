@@ -7,5 +7,5 @@ mongoose.connect(process.env.MONGODB_URI, (err, client) => {
     }
     console.log('Connected to MongoDB server');
 });
-
+mongoose.set('useCreateIndex', true);
 module.exports = {mongoose};
