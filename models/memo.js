@@ -63,6 +63,9 @@ var MemoSchema = new mongoose.Schema({
         type: [Date],
         default: Date.now
     },
+    lastdate: {
+        type: Date
+    },
     placeId: {
         type: String,
         trim: true
@@ -158,23 +161,99 @@ MemoSchema.methods.updateConvergeMemo = async function (body) {
         return e;
     }       
 }; 
+ 
+MemoSchema.statics.findMyMemos = async function(_id, category) {
     
-
-MemoSchema.statics.findMyMemos = async function(_id, category){
     var Memo = this;
-    if (!category) {
-        var memos = await Memo.find({
-            _creatorId: _id
-        });
-    } else {
-        var memos = await Memo.find({
-            _creatorId: _id,
-            category: {$in: category}
-        });
+    console.log('***memo findMyMemos category: ', category);
+    var newCollection = _id;
+    // $project:
+    //        {
+    //          item: 1,
+    //          discount:
+    //            {
+    //              $cond: { if: { $gte: [ "$qty", 250 ] }, then: 30, else: 20 }
+    //            }
+    //        }
+    // $expr: {
+    //     $lt:[ {
+    //        $cond: {
+    //           if: { $gte: ["$qty", 100] },
+    //           then: { $divide: ["$price", 2] },
+    //           else: { $divide: ["$price", 4] }
+    //         }
+    //     },
+    //     5 ] }
+
+    //{ $match: { $expr: { <aggregation expression> } } }
+
+    try {
+        await Memo.aggregate([
+            { $match: {
+                 _creatorId: _id,
+                 $expr: { 
+                        $cond: { if: { $eq: [category , undefined] }, then: {category: null}, else: { $in:['$category',  category] }}  
+                    } 
+                }
+            },
+            { $project:{
+                //_id: 0,
+                //id: '$_id',
+                _creatorId: 1,
+                memoName: 1,
+                address: 1,
+                country: 1,
+                city: 1,
+                longitute:1,
+                latitude: 1,
+                memoText: 1,
+                image: 1,
+                phoneNum: 1,
+                website: 1,
+                category: 1,
+                isPrivate: 1,
+                date: 1,
+                lastdate: 1,
+                placeId: 1,
+                likesSum: {  $size: '$_creatorId' },
+                lastUpdated: { $arrayElemAt: [ '$date',  -1 ]}
+                }  
+            },
+            { $sort: {likesSum: -1, lastUpdated: -1}},
+            { $out: newCollection} 
+          ],
+          function(err,docs) {  
+            if (err) console.log("error: ", err) ;
+            else console.log("the all documents have been written onto out!***:", docs); 
+            }
+        );
+    } catch (e) {
+        console.log('***memo findMyMemos error', e);
     }
     
-    return memos;
-};
+    // var NewCollection = mongoose.model(newCollection, MemoSchema, newCollection);  
+    // return NewCollection;
+}
+// NewCollection.find({}).skip(1).limit(2).exec(function(err, results) {
+//     console.log('***result',results);
+// });
+
+
+// MemoSchema.statics.findMyMemos = async function(_id, category){
+//     var Memo = this;
+//     if (!category) {
+//         var memos = await Memo.find({
+//             _creatorId: _id
+//         }).sort({});
+//     } else {
+//         var memos = await Memo.find({
+//             _creatorId: _id,
+//             category: {$in: category}
+//         });
+//     }
+    
+//     return memos;
+// };
 
 MemoSchema.statics.findUserMemos = async function(_id, isPrivate, category) {
 var Memo = this;
@@ -315,4 +394,4 @@ MemoSchema.post('save', async function () {
 
 var Memo = mongoose.model('Memo', MemoSchema);
 
-module.exports = {Memo};
+module.exports = {Memo,MemoSchema};

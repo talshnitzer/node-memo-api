@@ -7,9 +7,9 @@ const bodyParser = require('body-parser');
 const {mongoose} = require('../db/mongoose.js');
 const {ObjectId} = require('mongodb');
 const {User} = require('../models/user.js');
-const {Memo} = require('../models/memo');
+const {Memo, MemoSchema} = require('../models/memo');
 const {appId2DbId} = require('./../server/middleware/conversion');
-const {categories} = require('./../models/category.js')
+const {categories} = require('./../models/category.js');
 
 const app = express();
 const port = process.env.PORT;
@@ -87,10 +87,12 @@ app.post('/memos/update',async (req,res)=>{
                 if (err || !memo ) {
                     return  res.status(404).send('memo not found');
                 }
+                //update one instance memo
                 if (memo._creatorId.length === 1) {
                     memo.updateMemo(body).then((updatedMemo) => {
                         res.send(updatedMemo);
                     });     
+                    //update more than one instance memo
                 } else {
                     memo.updateConvergeMemo(body).then((updatedMemo) => {
                         res.send(updatedMemo);
@@ -103,12 +105,37 @@ app.post('/memos/update',async (req,res)=>{
     }   
 });
 
+//paging function
+var paging = async (myCollection, pagesToSkip, docsInPage) => {
+    var results = {};
+    try {
+        var myCollectionModel = mongoose.model(myCollection, MemoSchema, myCollection);  
+    } catch (e) {
+        console.log('***paging error', e);
+    }
+    
+    results.memos = await myCollectionModel.find({}).skip(pagesToSkip*docsInPage).limit(docsInPage);
+    if (pagesToSkip === 0) {
+        results.totalDocsNum =  await myCollectionModel.estimatedDocumentCount();
+    }
+    
+    console.log('***paging result',results);
+    return results;       
+}
+
+
 //GET all my memos
 app.get('/memos/:userId', async (req,res) => {
     try{
         const categoryString = req.query.category;
-        category = categoryString? categoryString.split(',') : categoryString;
-        var memos = await Memo.findMyMemos(req.params.userId, category);
+        const pageNumber = Number(req.query.pageNum);
+        const limit = Number(req.query.limit);
+        category = categoryString? categoryString.split(',').map(Number) : categoryString;
+        console.log('***server point 1');
+        if (pageNumber === 0) {
+            await Memo.findMyMemos(req.params.userId, category);
+        }
+        var memos = await paging(req.params.userId, pageNumber, limit);
         res.send({memos});
     } catch (e) {
         res.status(400).send(e);

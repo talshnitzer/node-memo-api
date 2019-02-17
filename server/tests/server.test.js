@@ -166,24 +166,25 @@ describe ('POST /memos/create', () => {
     });
 });
 
- describe ('GET /memos/:userId', () => {
+ describe ('GET /memos/:userId?pageNum=1&limit=${users.length}', () => {
     it ('Should return all user memos', (done) => {
         request(app)
-        .get(`/memos/${users[0]._id.toHexString()}`)
+        .get(`/memos/${users[0]._id.toHexString()}?pageNum=0&limit=${users.length}`)
         .expect(200)
         .expect((res) => {
-            expect(res.body.memos[0]._creatorId).toContain(users[0]._id.toHexString());
-            expect(res.body.memos.length).toBe(3);
+            console.log('***respond body', res.body);
+            expect(res.body.memos.memos[0]._creatorId).toContain(users[0]._id.toHexString());
+            expect(res.body.memos.memos.length).toBe(3);
         })
         .end(done)
     });  
     it ('Should return user memos with category 1', (done) => {
         request(app)
-        .get(`/memos/${users[0]._id.toHexString()}?category=1`)
+        .get(`/memos/${users[0]._id.toHexString()}?category=1&pageNum=0&limit=${users.length}`)
         .expect(200)
         .expect((res) => {
-            expect(res.body.memos[0]._creatorId).toContain(users[0]._id.toHexString());
-            expect(res.body.memos.length).toBe(2);
+            expect(res.body.memos.memos[0]._creatorId).toContain(users[0]._id.toHexString());
+            expect(res.body.memos.memos.length).toBe(2);
         })
         .end(done)
     });  
