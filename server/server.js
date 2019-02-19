@@ -199,7 +199,7 @@ app.post('/users/signup', appId2DbId, async (req, res) => {
          const body = req.body;
          const user = new User(body);
          await user.save();
-         var userIdFriends = {_id: user._id,
+         var userIdFriends = {  _id: user._id,
                                 appFriends: user.appFriends,
                                 friends_id: user.friends_id,
                                 categories: categories
@@ -227,7 +227,8 @@ app.post('/users/login', appId2DbId,async (req,res)=> {
         res.send({
                     appFriends: updatedUser.appFriends, 
                     _id: updatedUser._id,
-                    friends_id: updatedUser.friends_id
+                    friends_id: updatedUser.friends_id,
+                    categories: categories
                 });
     } catch (e) {
         errorToSend.errorCode =  400;
@@ -238,7 +239,6 @@ app.post('/users/login', appId2DbId,async (req,res)=> {
 
 app.listen(port,() =>{
     console.log(`Started up at port ${port}`);
-
 });
 
 module.exports = {app};

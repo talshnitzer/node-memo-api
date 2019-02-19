@@ -166,6 +166,32 @@ describe ('POST /memos/create', () => {
     });
 });
 
+describe ('POST /memos/update', () => {
+    it('Should update existing memo',(done) => {
+        let body = {};
+        Memo.find().then((memos) => {
+            body._id = memos[0]._id;
+            body._creatorId = memos[0]._creatorId;
+            body.memoText = 'Tal Shnitzer the great';
+            body.isPrivate = !memos[0].isPrivate;   
+            console.log('**POST /memos/update body',body);
+            request(app)
+            .post('/memos/update')
+            .send(body)
+            .expect(200)
+            .end((err, res) => {
+            if (err) {
+                return done(err);
+            }
+            Memo.find({_id: body._id}).then((memo) => {
+                expect(memo[0].memoText[0]).toBe('Tal Shnitzer the great');
+                done();
+            }).catch((e) => done(e)); 
+        }); 
+    });  
+    });
+});
+
  describe ('GET /memos/:userId?pageNum=1&limit=${users.length}', () => {
     it ('Should return all user memos', (done) => {
         request(app)
