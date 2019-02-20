@@ -5,10 +5,11 @@ const {ObjectID} = require('mongodb');
 const {app} = require('./../server');
 const {User} = require('./../../models/user');
 const {Memo} = require('./../../models/memo');
-const {users,populateUsers, memos, populateMemos} = require('./seed/seed');
+const {users,populateUsers, memos, populateMemos, removeCachedCollection} = require('./seed/seed');
 
 beforeEach(populateUsers);
 beforeEach(populateMemos);
+beforeEach(removeCachedCollection);
 
 describe ('POST /users/signup', () => {
     it('Should create a new user', (done) => {
@@ -192,7 +193,7 @@ describe ('POST /memos/update', () => {
     });
 });
 
- describe ('GET /memos/:userId?pageNum=1&limit=${users.length}', () => {
+ describe ('GET /memos/:userId?pageNum=0&limit=${users.length}', () => {
     it ('Should return all user memos', (done) => {
         request(app)
         .get(`/memos/${users[0]._id.toHexString()}?pageNum=0&limit=${users.length}`)

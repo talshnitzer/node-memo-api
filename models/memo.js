@@ -4,7 +4,8 @@ const GeoPoint = require('geopoint');
 var MemoSchema = new mongoose.Schema({
     _creatorId: {
         type: [String],
-        require: true
+        require: true,
+        index: true
     },
     memoName: {
         type: String,
@@ -68,9 +69,13 @@ var MemoSchema = new mongoose.Schema({
     },
     placeId: {
         type: String,
-        trim: true
+        trim: true,
+        index: true
     }
 });
+
+//MemoSchema.index({_creatorId: 1, placeId: 1}, {unique: true});
+
 
 MemoSchema.methods.removeFromMemo =  function (_creatorId) {
     try{
@@ -390,7 +395,6 @@ MemoSchema.post('save', async function () {
         if (merged_memo) {await Memo.remove(memo);}
     }   
 }); 
-
 
 var Memo = mongoose.model('Memo', MemoSchema);
 

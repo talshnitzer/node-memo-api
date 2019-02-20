@@ -25,6 +25,11 @@ app.use(bodyParser.json());
 app.post('/memos/create',async (req,res)=>{
     try{
         var body = req.body;
+        var duplicateMemo = await Memo.findOne({_creatorId: body._creatorId[0], placeId: body.placeId});
+        if (duplicateMemo) {
+           res.status(400).send('duplicate memo, not inserted to db') ;
+           return;
+        }
         var memo = new Memo(body);   
         var doc = await memo.save();
         res.send(doc);
@@ -55,8 +60,7 @@ app.post('/memos/delete',async (req,res)=>{
                 await Memo.deleteOne({_id: reqMemoId});
             } catch (e) {
                 throw e;
-            }
-            
+            }  
             return res.send({});
         }
          //if convereged memo - find it's place in array by finding _creatorId
@@ -167,8 +171,6 @@ app.get('/allMemos/:userId', async (req,res) => {
         const lat = req.query.lat;
         const long = req.query.long;
         const distance = req.query.distance;
-        var next = req.query.next;
-        var limit = req.query.limit;
         console.log(`category ${category}, lat ${lat}, long ${long}, distance ${distance}`);
         const isPrivate = false;
        
@@ -234,7 +236,7 @@ app.post('/users/login', appId2DbId,async (req,res)=> {
         errorToSend.errorCode =  400;
         errorToSend.errorMessage = e.errmsg;
         res.status(400).send(errorToSend);
-    }
+    } 
 });
 
 app.listen(port,() =>{

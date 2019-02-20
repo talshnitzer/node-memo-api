@@ -1,4 +1,5 @@
 const {ObjectId} = require('mongodb');
+const mongoose = require('mongoose');
 
 const {User} = require('./../../../models/user');
 const {Memo} = require('./../../../models/memo')
@@ -168,4 +169,16 @@ const populateUsers = (done) => {
     }).then(() => done());
 };
 
-module.exports = {users,populateUsers, memos, populateMemos};
+const removeCachedCollection = (done) => {
+    //users[0]._id.toHexString().collection.remove({}).then(() => done());
+    //mongoose.connection.db.collection(users[0]._id.toHexString()).remove({}).then(() => {
+        
+    mongoose.connection.db.collection(users[0]._id.toHexString()).drop().then(() => {
+                console.log('@@@@user[0]._id : ', users[0]._id.toHexString());    
+            }, (e) => {
+                console.log('remove cache error', e);
+            });
+     done();
+};
+
+module.exports = {users,populateUsers, memos, populateMemos, removeCachedCollection};
