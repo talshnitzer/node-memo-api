@@ -218,15 +218,15 @@ describe ('POST /memos/update', () => {
      
  });
 
- describe ('GET /allMemos/:userId', () => {
+ describe ('GET /allMemos/:userId?pageNum=0&limit=${memos.length}', () => {
     it (`Should return all user's memos and friends memos`, (done) => {
         request(app)
-        .get(`/allMemos/${users[0]._id.toHexString()}`)
+        .get(`/allMemos/${users[0]._id.toHexString()}?pageNum=0&limit=${memos.length}`)
         .expect(200)
         .expect((res) => {
-            expect(res.body.friendsMemos.length).toBe(10);
+            expect(res.body.friendsMemos.memos.length).toBe(10);
             const userIdAndFriends = users[0].friends_id.toString().concat(users[0]._id.toString());
-            expect(userIdAndFriends).toContain(res.body.friendsMemos[0]._creatorId.toString());
+            expect(userIdAndFriends).toContain(res.body.friendsMemos.memos[0]._creatorId.toString());
             //expect(users[0].friends_id.toString()).toContain(res.body.friendsMemos[0]._creatorId.toString());
         })
         .end(done)
@@ -234,12 +234,12 @@ describe ('POST /memos/update', () => {
 
     it (`Should return all user's and friends memos with category 2`, (done) => {
         request(app)
-        .get(`/allMemos/${users[0]._id.toHexString()}?category=2`)
+        .get(`/allMemos/${users[0]._id.toHexString()}?category=2&pageNum=0&limit=${memos.length}`)
         .expect(200)
         .expect((res) => {
-            expect(res.body.friendsMemos.length).toBe(3);
+            expect(res.body.friendsMemos.memos.length).toBe(3);
             const userIdAndFriends = users[0].friends_id.toString().concat(users[0]._id.toString());
-            expect(userIdAndFriends).toContain(res.body.friendsMemos[0]._creatorId.toString());
+            expect(userIdAndFriends).toContain(res.body.friendsMemos.memos[0]._creatorId.toString());
         })
         .end(done)
     });

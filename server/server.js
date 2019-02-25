@@ -134,7 +134,7 @@ app.get('/memos/:userId', async (req,res) => {
         const categoryString = req.query.category;
         const pageNumber = Number(req.query.pageNum);
         const limit = Number(req.query.limit);
-        category = categoryString? categoryString.split(',').map(Number) : categoryString;
+        var category = categoryString? categoryString.split(',').map(Number) : categoryString;
         console.log('***server point 1');
         if (pageNumber === 0) {
             await Memo.findMyMemos(req.params.userId, category);
@@ -167,19 +167,25 @@ app.get('/memos/:userId', async (req,res) => {
     //GET my friends and my memos, around geopoint
 app.get('/allMemos/:userId', async (req,res) => {
     try{
-        const category = req.query.category ? req.query.category.split(',') : req.query.category;
+        
+        const categoryString = req.query.category;
+        const category = categoryString ? categoryString.split(',').map(Number) : categoryString;
         const lat = req.query.lat;
         const long = req.query.long;
         const distance = req.query.distance;
-        console.log(`category ${category}, lat ${lat}, long ${long}, distance ${distance}`);
         const isPrivate = false;
+        const pageNumber = Number(req.query.pageNum);
+        const limit = Number(req.query.limit);
        
         //find user friends
         const friends = await User.getFriends(req.params.userId);
         console.log('***friends***',friends );
         if (!lat || !long || !distance){
             //for each of user friend find all public memos of user
-            var friendsMemos = await Memo.findManyUsersMemos(friends, category, req.params.userId);
+            if (pageNumber === 0) {
+                await Memo.findManyUsersMemos(friends, category, req.params.userId);
+            }  
+            var friendsMemos = await paging(req.params.userId, pageNumber, limit);
         } else {
             //for each of user friends find all public memos in 'distance' from 'long,lat' point
             console.log('found lat and long');
@@ -187,7 +193,6 @@ app.get('/allMemos/:userId', async (req,res) => {
             console.log('***friendsMemos in server.js***' , friendsMemos);
         }
         res.send({friendsMemos});
-
         } catch (e) {
             res.status(400).send(e);
         }

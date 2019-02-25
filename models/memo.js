@@ -124,7 +124,7 @@ MemoSchema.methods.updateConvergeMemo = async function (body) {
             throw new Error('the creator is not found in the memo');
         }
         //update non private memo
-        if (body.isPrivate === false || body.isPrivate === undefined) {
+        if ((body.isPrivate === false || body.isPrivate === undefined) && (body.category===memo.category)) {
             if (body.memoText) {memo.memoText[creatorIndex] = body.memoText};
             if (body.image) {memo.image[creatorIndex] = body.image};
             memo.date[creatorIndex] = body.date;
@@ -139,7 +139,7 @@ MemoSchema.methods.updateConvergeMemo = async function (body) {
             console.log('***updateMemo***', updatedMemo);
             return updatedMemo;
         }; 
-        //update peivate memo - remove it from the converged memo and create a new memo with the creator updates
+        //update private memo - remove it from the converged memo and create a new memo with the creator updates
         var newBody = {};
         newBody.memoName = memo.memoName;
         newBody.address = memo.address;
@@ -148,7 +148,7 @@ MemoSchema.methods.updateConvergeMemo = async function (body) {
         newBody.longitute = memo.longitute;
         newBody.latitude = memo.latitude
         newBody.phoneNum = memo.phoneNum;
-        newBody.category = memo.category;
+        newBody.category = body.category;
         newBody.placeId = memo.placeId;
         newBody._creatorId = body._creatorId;
         newBody.memoText = body.memoText || memo.memoText[creatorIndex];
@@ -172,25 +172,6 @@ MemoSchema.statics.findMyMemos = async function(_id, category) {
     var Memo = this;
     console.log('***memo findMyMemos category: ', category);
     var newCollection = _id;
-    // $project:
-    //        {
-    //          item: 1,
-    //          discount:
-    //            {
-    //              $cond: { if: { $gte: [ "$qty", 250 ] }, then: 30, else: 20 }
-    //            }
-    //        }
-    // $expr: {
-    //     $lt:[ {
-    //        $cond: {
-    //           if: { $gte: ["$qty", 100] },
-    //           then: { $divide: ["$price", 2] },
-    //           else: { $divide: ["$price", 4] }
-    //         }
-    //     },
-    //     5 ] }
-
-    //{ $match: { $expr: { <aggregation expression> } } }
 
     try {
         await Memo.aggregate([
@@ -285,36 +266,93 @@ return memos;
 //         const publicMemos = await Memo.findUserMemos(usersId, isPrivate, category);
 //         friendsMemos = friendsMemos.concat(publicMemos);
 //     }
+//     return friendsMemos;                        
+// };
+MemoSchema.statics.findManyUsersMemos = async function (usersIds, category, myId) {
+    var Memo = this;
+    console.log('***memo findManyUsersMemos category, usersIds: ', category, usersIds);
+    var newCollection = myId;
+
+    try {
+        await Memo.aggregate([
+            { $match: {   
+                $expr: { 
+                        $cond: { if: { $eq: [category , undefined] }, then: {category: null}, else: { $in:['$category',  category] }}  
+                    } } },
+            { $match: {
+                $expr:{
+                        $ne:[
+                          {$size:{$setIntersection:["$_creatorId",{ $concatArrays: [ [myId], usersIds ] }]}},
+                          0
+                        ]
+                      }     
+            }},
+            { $project:{
+                //_id: 0,
+                //id: '$_id',
+                _creatorId: 1,
+                memoName: 1,
+                address: 1,
+                country: 1,
+                city: 1,
+                longitute:1,
+                latitude: 1,
+                memoText: 1,
+                image: 1,
+                phoneNum: 1,
+                website: 1,
+                category: 1,
+                isPrivate: 1,
+                date: 1,
+                lastdate: 1,
+                placeId: 1,
+                likesSum: {  $size: '$_creatorId' },
+                lastUpdated: { $arrayElemAt: [ '$date',  -1 ]}
+                }  
+            },
+            { $sort: {likesSum: -1, lastUpdated: -1}},
+            { $out: newCollection} 
+          ],
+          function(err,docs) {  
+            if (err) console.log("error: ", err) ;
+            else {
+                console.log("the all documents have been written onto out!***:", docs);
+                }
+            }
+        );
+    } catch (e) {
+        console.log('***memo findManyUsersMemos error', e);
+    
+    }
+}
+
+// MemoSchema.statics.findManyUsersMemos = async function (usersIds, category, myId) {
+//     var friendsMemos = [];
+//     var isPrivate = false
+//     console.log('***usersId***', usersIds)
+//     if (!category) {
+//         friendsMemos = await Memo.find({
+//             $or: [
+//                 {isPrivate: false,
+//                 _creatorId: {$in: usersIds}},
+//                 {_creatorId: myId}
+//             ]    
+//         });
+//     } else {
+//         friendsMemos = await Memo.find({
+//             $or: [
+//                 {category: {$in: category},
+//                 isPrivate: false,
+//                 _creatorId: {$in: usersIds}},
+//                 {
+//                 _creatorId: myId,
+//                 category: {$in: category}
+//                 }
+//             ]  
+//         });
+//     }   
 //     return friendsMemos;
 // };
-
-MemoSchema.statics.findManyUsersMemos = async function (usersIds, category, myId) {
-    var friendsMemos = [];
-    var isPrivate = false
-    console.log('***usersId***', usersIds)
-    if (!category) {
-        friendsMemos = await Memo.find({
-            $or: [
-                {isPrivate: false,
-                _creatorId: {$in: usersIds}},
-                {_creatorId: myId}
-            ]    
-        });
-    } else {
-        friendsMemos = await Memo.find({
-            $or: [
-                {category: {$in: category},
-                isPrivate: false,
-                _creatorId: {$in: usersIds}},
-                {
-                _creatorId: myId,
-                category: {$in: category}
-                }
-            ]  
-        });
-    }   
-    return friendsMemos;
-};
 
 
 //find all user public memos within the distance from the given Geopoint. category optional. 
