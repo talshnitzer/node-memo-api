@@ -52,9 +52,21 @@ var MemoSchema = new mongoose.Schema({
     },
     category: {
         require: true,
-        type: Number,
-        min: 0,
-        max: 99
+        type: [[Number],[Number]],
+        // array1.forEach(function(element) {
+        //     console.log(element);
+        //   });
+        //validate: v => v.forEach(console.log('validator category array num', v) ) 
+        // min: 0,
+        // max: 99
+        validate: {
+            validator: function (v) {   
+                for (var i of v[0]) {
+                     if (i<=0 || i>=99) {return false} else {return true};
+                 }
+            },
+            message: 'valid category values: 0-99 '
+        }
     },
     isPrivate: {
         type: Boolean,
@@ -91,6 +103,7 @@ MemoSchema.methods.removeFromMemo =  function (_creatorId) {
         removedItems[1] = memo.memoText.splice(creatorIndex, 1);
         removedItems[2] = memo.image.splice(creatorIndex, 1);
         removedItems[3] = memo.date.splice(creatorIndex, 1);
+        removedItems[4] = memo.category.splice(creatorIndex, 1);
         console.log('***removeFromMemo*** removedItems:', removedItems);
         memo.save();
         return removedItems;
@@ -107,6 +120,7 @@ MemoSchema.methods.updateMemo = async function (body) {
     if (body.memoText) {memo.memoText = body.memoText};
     if (body.image) {memo.image = body.image};
     if (body.isPrivate) {memo.isPrivate = body.isPrivate};
+    if (body.category) {memo.category = body.category};
     memo.date = body.date;
     console.log('***memo.date, body.date', memo.date, body.date);
     var updatedMemo = await memo.save(); 
@@ -124,16 +138,19 @@ MemoSchema.methods.updateConvergeMemo = async function (body) {
             throw new Error('the creator is not found in the memo');
         }
         //update non private memo
-        if ((body.isPrivate === false || body.isPrivate === undefined) && (body.category===memo.category)) {
+        if (body.isPrivate === false || body.isPrivate === undefined) {
             if (body.memoText) {memo.memoText[creatorIndex] = body.memoText};
             if (body.image) {memo.image[creatorIndex] = body.image};
+            if (body.category) {memo.category[creatorIndex] = body.category[0]};
             memo.date[creatorIndex] = body.date;
             memo.markModified('image');
             memo.markModified('memoText');
+            memo.markModified('category');
             try {
                 var updatedMemo = await memo.save(); 
             } catch (e) {
                 console.log('***updateConvergeMemo*** save error: ', e);
+                return e;
             }
             
             console.log('***updateMemo***', updatedMemo);
@@ -177,9 +194,11 @@ MemoSchema.statics.findMyMemos = async function(_id, category) {
         await Memo.aggregate([
             { $match: {
                  _creatorId: _id,
-                 $expr: { 
-                        $cond: { if: { $eq: [category , undefined] }, then: {category: null}, else: { $in:['$category',  category] }}  
-                    } 
+                 category: {$elemMatch: {$elemMatch:{$in: category}}}
+                //  $expr: { 
+                //        // $cond: { if: { $eq: [category , undefined] }, then: {category: null}, else:   {$in:['$category',  category] }}  
+                       
+                //     } 
                 }
             },
             { $project:{
@@ -275,11 +294,13 @@ MemoSchema.statics.findManyUsersMemos = async function (usersIds, category, myId
 
     try {
         await Memo.aggregate([
-            { $match: {   
-                $expr: { 
-                        $cond: { if: { $eq: [category , undefined] }, then: {category: null}, else: { $in:['$category',  category] }}  
-                    } } },
-            { $match: {
+            { $match: {  
+                category: {$elemMatch: {$elemMatch:{$in: category}}},
+                // $expr: { 
+                //         //$cond: { if: { $eq: [category , undefined] }, then: {category: null}, else: { $in:['$category',  category] }}  
+                //         $cond: { if: { $eq: [category , undefined] }, then: {category: null}, else: { $in:[{$eleMatch: {'$category':  category}}] }}  
+                //     } } },
+            
                 $expr:{
                         $ne:[
                           {$size:{$setIntersection:["$_creatorId",{ $concatArrays: [ [myId], usersIds ] }]}},
@@ -419,7 +440,7 @@ MemoSchema.post('save', async function () {
     var memo = this;
     if (memo.isPrivate === false) {
         var merged_memo = await Memo.findOneAndUpdate({placeId: memo.placeId,
-                    category: memo.category,
+                    //category: memo.category,
                     _id: {$ne: memo._id },
                     isPrivate: false
             },
@@ -427,7 +448,8 @@ MemoSchema.post('save', async function () {
             $push: {"_creatorId": memo._creatorId,
                 "memoText": memo.memoText,
                 "image": memo.image,
-                "date": memo.date
+                "date": memo.date,
+                "category": {$each: memo.category}
                 }
             }, {new: true});
         if (merged_memo) {await Memo.remove(memo);}

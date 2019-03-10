@@ -148,7 +148,7 @@ describe ('POST /memos/create', () => {
             city: "Karmiel",
             longitute:"32.928406",
             latitude: "35.323580",
-            category: 100,
+            category: [[100]],
             isPrivate: true
             };
         request(app)
@@ -193,10 +193,10 @@ describe ('POST /memos/update', () => {
     });
 });
 
- describe ('GET /memos/:userId?pageNum=0&limit=${users.length}', () => {
+ describe ('GET /memos/:userId?category=1,2,3,4,5,6&pageNum=0&limit=${users.length}', () => {
     it ('Should return all user memos', (done) => {
         request(app)
-        .get(`/memos/${users[0]._id.toHexString()}?pageNum=0&limit=${users.length}`)
+        .get(`/memos/${users[0]._id.toHexString()}?category=1,2,3,4,5,6&pageNum=0&limit=${users.length}`)
         .expect(200)
         .expect((res) => {
             console.log('***respond body', res.body);
@@ -218,10 +218,10 @@ describe ('POST /memos/update', () => {
      
  });
 
- describe ('GET /allMemos/:userId?pageNum=0&limit=${memos.length}', () => {
+ describe ('GET /allMemos/:userId?category=1,2,3,4,5,6&pageNum=0&limit=${memos.length}', () => {
     it (`Should return all user's memos and friends memos`, (done) => {
         request(app)
-        .get(`/allMemos/${users[0]._id.toHexString()}?pageNum=0&limit=${memos.length}`)
+        .get(`/allMemos/${users[0]._id.toHexString()}?category=1,2,3,4,5,6&pageNum=0&limit=${memos.length}`)
         .expect(200)
         .expect((res) => {
             expect(res.body.friendsMemos.memos.length).toBe(10);

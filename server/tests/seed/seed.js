@@ -113,7 +113,7 @@ const memos = [{
      longitute:"32.9268287   ",
      latitude: "35.3268775",
      memoText: "test memo num 1",
-     category: "1 ",
+     category: "1",
      isPrivate: "false"
  },{
      _creatorId: userOneId._id,

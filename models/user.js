@@ -53,6 +53,36 @@ UserSchema.statics.getFriends = async function(_id) {
 
 
 
+UserSchema.statics.upsertFbUser = function(accessToken, refreshToken, profile, cb) {
+    var that = this;
+    return this.findOne({
+            'appId': profile.id
+    }, function(err, user) {
+        // no user was found, lets create a new one
+        if (!user) {
+            var newUser = new that({
+                    email: profile.emails[0].value,
+                    fullName:profile.displayName,
+                    //facebookProvider: {
+                    appId: profile.id
+                      // token: accessToken
+                   // }
+            });
+
+            newUser.save(function(error, savedUser) {
+                if (error) {
+                    console.log(error);
+                }
+                return cb(error, savedUser);
+        });
+        } else {
+            return cb(err, user);
+        }
+    });
+    };
+
+
+
 const User = mongoose.model('User', UserSchema);
 // mongoose.connection.db.collection('userCollection').insert({
 //     username: 'user1',
