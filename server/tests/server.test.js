@@ -7,24 +7,25 @@ const {User} = require('./../../models/user');
 const {Memo} = require('./../../models/memo');
 const {users,populateUsers, memos, populateMemos, removeCachedCollection} = require('./seed/seed');
 
+
 beforeEach(populateUsers);
 beforeEach(populateMemos);
 beforeEach(removeCachedCollection);
 
-describe ('POST /users/signup', () => {
+describe ('POST /auth/facebook/token', () => {
     it('Should create a new user', (done) => {
         var appId = '100';
         var fullName = 'Tal Snitzer';
         var appFriends = ['301011240225891', '710125477'];
-
+        var access_token = 'EAADARWWYjeQBAG91n78uGubWIt8AMy44VnfJZCZAdycDSiLhQGfNVIRykYAVP7aNfFlRqFIF0J29VQUiO9iKVecT4ras6vpTCAKBFQcpTK8CpHNn80tzslAH4fosIcF00F5q0G6lmf5DC6efxEd0UR3DB8w71BzzVmBQmbeOxe6OwHBkYRVbfzyCtCZCGy3TvePfdgntOrgmHloabfo';
 
         request(app)
-        .post('/users/signup')
-        .send({appId, fullName, appFriends })
+        .post('/auth/facebook/token')
+        .send({access_token, appId, fullName, appFriends })
         .expect(200)
         .expect((res) => {
             expect(res.body._id).toBeTruthy();
-            expect(res.body.fullName).toBeFalsy();
+            expect(res.body.fullName).toBeTruthy();
             expect(res.body.appFriends).toEqual(appFriends);
         })
         .end((err) =>{
@@ -41,87 +42,88 @@ describe ('POST /users/signup', () => {
 
     });
 
-    it('it should not create new user', (done) =>{
-        request(app)
-        .post('/users/signup')
-        .send(users[0])
-        .expect(400)
-        .end((err, res) => {
-            if (err) {
-                return done(err);
-            }
+    // it('it should not create new user', (done) =>{
+    //     request(app)
+    //     .post('/auth/facebook/token')
+    //     .send({access_token,users[0]})
+    //     .expect(400)
+    //     .end((err, res) => {
+    //         if (err) {
+    //             return done(err);
+    //         }
 
-            User.find({}).then((users) => {
-                expect(users.length).toBe(3);
-                done();
-            });
-        }); 
+    //         User.find({}).then((users) => {
+    //             expect(users.length).toBe(3);
+    //             done();
+    //         });
+    //     }); 
 
-    });
+    // });
 });
 
-describe ('POST /users/login', () => {
-    it('Should update an existing user', (done) => {
-        var appFriends = users[0].appFriends.concat('100100');
-        request(app)
-        .post('/users/login')
-        .send({appId: users[0].appId, appFriends: appFriends })
-        .expect(200)
-        .expect((res) => {
-            expect(res.body._id).toBeTruthy();
-            expect(res.body.fullName).toBeFalsy();
-            expect(res.body.appFriends).toEqual(appFriends);
-        })
-        .end((err) =>{
-            if (err) {
-                return done(err);
-            }
+// describe ('POST /users/login', () => {
+//     it('Should update an existing user', (done) => {
+//         var appFriends = users[0].appFriends.concat('100100');
+//         request(app)
+//         .post('/users/login')
+//         .send({appId: users[0].appId, appFriends: appFriends })
+//         .expect(200)
+//         .expect((res) => {
+//             expect(res.body._id).toBeTruthy();
+//             expect(res.body.fullName).toBeFalsy();
+//             expect(res.body.appFriends).toEqual(appFriends);
+//         })
+//         .end((err) =>{
+//             if (err) {
+//                 return done(err);
+//             }
 
-            User.findOne({appId: users[0].appId}).then((user) => {
-                expect(user.appFriends).toEqual(appFriends);
-                done();
-            }).catch((e) => done());
-        });
+//             User.findOne({appId: users[0].appId}).then((user) => {
+//                 expect(user.appFriends).toEqual(appFriends);
+//                 done();
+//             }).catch((e) => done());
+//         });
 
-    });
+//     });
 
-    it('it should not login/update new user', (done) =>{
-        var appId = users[0].appId.concat('123');
+//     it('it should not login/update new user', (done) =>{
+//         var appId = users[0].appId.concat('123');
         
-        request(app)
-        .post('/users/login')
-        .send({appId: appId, appFriends: users[0].appFriends})
-        .expect(404)
-        .end((err, res) => {
-            if (err) {
-                return done(err);
-            }
+//         request(app)
+//         .post('/users/login')
+//         .send({appId: appId, appFriends: users[0].appFriends})
+//         .expect(404)
+//         .end((err, res) => {
+//             if (err) {
+//                 return done(err);
+//             }
 
-            User.find({}).then((users) => {
-                expect(users.length).toBe(3);
-                done();
-            });
-        }); 
+//             User.find({}).then((users) => {
+//                 expect(users.length).toBe(3);
+//                 done();
+//             });
+//         }); 
 
-    });
-});
+//     });
+ //});
 
 
 describe ('POST /memos/create', () => {
     it('Should create a new memo', (done) => {
         var reqBody = {
-            _creatorId: "5c20b18f4230672300fe606c",
-            memoName: "BBB",
+            
+            memoName: "QQQ",
             address: "Ma'ale Kamon St 2, Karmiel",
             country: "Israel",
             city: "Karmiel",
             longitute:"32.928406",
             latitude: "35.323580",
-            category: 1,
+            category: [[9]],
             isPrivate: true
             };
         request(app)
         .post('/memos/create')
+        .set('x-auth-token', users[0].token)
         .send(reqBody)
         .expect(200)
         .expect((res) => {
@@ -141,7 +143,7 @@ describe ('POST /memos/create', () => {
     it('Should not create a memo with invalid body data',(done) => {
         
         var reqBody = {
-            _creatorId: "5c20b18f4230672300fe606c",
+            
             memoName: "BBB",
             address: "Ma'ale Kamon St 2, Karmiel",
             country: "Israel",
@@ -153,6 +155,7 @@ describe ('POST /memos/create', () => {
             };
         request(app)
         .post('/memos/create')
+        .set('x-auth-token', users[0].token)
         .send(reqBody)
         .expect(400)
         .end((err, res) => {
@@ -172,12 +175,13 @@ describe ('POST /memos/update', () => {
         let body = {};
         Memo.find().then((memos) => {
             body._id = memos[0]._id;
-            body._creatorId = memos[0]._creatorId;
+            
             body.memoText = 'Tal Shnitzer the great';
             body.isPrivate = !memos[0].isPrivate;   
             console.log('**POST /memos/update body',body);
             request(app)
             .post('/memos/update')
+            .set('x-auth-token', users[0].token)
             .send(body)
             .expect(200)
             .end((err, res) => {
@@ -193,10 +197,11 @@ describe ('POST /memos/update', () => {
     });
 });
 
- describe ('GET /memos/:userId?category=1,2,3,4,5,6&pageNum=0&limit=${users.length}', () => {
+ describe ('GET /memos?category=1,2,3,4,5,6&pageNum=0&limit=${users.length}', () => {
     it ('Should return all user memos', (done) => {
         request(app)
-        .get(`/memos/${users[0]._id.toHexString()}?category=1,2,3,4,5,6&pageNum=0&limit=${users.length}`)
+        .get(`/memos?category=1,2,3,4,5,6&pageNum=0&limit=${users.length}`)
+        .set('x-auth-token', users[0].token)
         .expect(200)
         .expect((res) => {
             console.log('***respond body', res.body);
@@ -207,7 +212,8 @@ describe ('POST /memos/update', () => {
     });  
     it ('Should return user memos with category 1', (done) => {
         request(app)
-        .get(`/memos/${users[0]._id.toHexString()}?category=1&pageNum=0&limit=${users.length}`)
+        .get(`/memos?category=1&pageNum=0&limit=${users.length}`)
+        .set('x-auth-token', users[0].token)
         .expect(200)
         .expect((res) => {
             expect(res.body.memos.memos[0]._creatorId).toContain(users[0]._id.toHexString());
@@ -221,7 +227,8 @@ describe ('POST /memos/update', () => {
  describe ('GET /allMemos/:userId?category=1,2,3,4,5,6&pageNum=0&limit=${memos.length}', () => {
     it (`Should return all user's memos and friends memos`, (done) => {
         request(app)
-        .get(`/allMemos/${users[0]._id.toHexString()}?category=1,2,3,4,5,6&pageNum=0&limit=${memos.length}`)
+        .get(`/allMemos?category=1,2,3,4,5,6&pageNum=0&limit=${memos.length}`)
+        .set('x-auth-token', users[0].token)
         .expect(200)
         .expect((res) => {
             expect(res.body.friendsMemos.memos.length).toBe(10);
@@ -234,7 +241,8 @@ describe ('POST /memos/update', () => {
 
     it (`Should return all user's and friends memos with category 2`, (done) => {
         request(app)
-        .get(`/allMemos/${users[0]._id.toHexString()}?category=2&pageNum=0&limit=${memos.length}`)
+        .get(`/allMemos?category=2&pageNum=0&limit=${memos.length}`)
+        .set('x-auth-token', users[0].token)
         .expect(200)
         .expect((res) => {
             expect(res.body.friendsMemos.memos.length).toBe(3);
@@ -251,7 +259,8 @@ describe ('POST /memos/update', () => {
                         };
         var distance = 0.3;
         request(app)
-        .get(`/allMemos/${users[0]._id.toHexString()}?category=1&&long=${location.long}&&lat=${location.lat}&&distance=${distance}`)
+        .get(`/allMemos?category=1&&long=${location.long}&&lat=${location.lat}&&distance=${distance}`)
+        .set('x-auth-token', users[0].token)
         .expect(200)
         .expect((res) => {
             expect(res.body.friendsMemos.length).toBe(3);
@@ -259,4 +268,6 @@ describe ('POST /memos/update', () => {
         })
         .end(done)
     });
+    
  });
+ 

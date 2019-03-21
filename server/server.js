@@ -10,6 +10,7 @@ const {User} = require('../models/user.js');
 const {Memo, MemoSchema} = require('../models/memo');
 const {appId2DbId} = require('./../server/middleware/conversion');
 const {categories} = require('./../models/category.js');
+const {createToken, generateToken, sendToken, authenticate, passport} = require('./../server/middleware/authentication');
 
 const app = express();
 const port = process.env.PORT;
@@ -22,11 +23,44 @@ app.use(bodyParser.json());
 //to add authentication of user
 //add getting _creatorId from authentication method
 
-app.post('/memos/create',async (req,res)=>{
+app.post('/auth/facebook/token',
+  passport.authenticate('facebook-token',{session: false}),
+  async function(req, res, next) {
+    if (!req.user) {
+        console.log('/auth/facebook/token - User Not Authenticated, req.body:', req.body);
+      return res.send(401, 'User Not Authenticated');
+    }
+   
+    // prepare token for API
+    req.auth = {
+      id: req.user.id
+    };
+
+    next();
+  },appId2DbId, generateToken, sendToken);
+
+  app.post('/users/login',
+  passport.authenticate('facebook-token',{session: false}),
+  async function(req, res, next) {
+    if (!req.user) {
+      return res.send(401, 'User Not Authenticated');
+    }
+   
+    // prepare token for API
+    req.auth = {
+      id: req.user.id
+    };
+
+    next();
+  },appId2DbId, generateToken, sendToken);
+
+app.post('/memos/create',authenticate,async (req,res)=>{
     try{
         var body = req.body;
-        var duplicateMemo = await Memo.findOne({_creatorId: body._creatorId[0], placeId: body.placeId});
+        body._creatorId = req.user._id;
+        var duplicateMemo = await Memo.findOne({_creatorId: body._creatorId, placeId: body.placeId});
         if (duplicateMemo) {
+            console.log('%%%%post /memos/create duplicate memo- duplicateMemo, : body._creatorId, body.placeId', duplicateMemo);
            res.status(400).send('duplicate memo, not inserted to db') ;
            return;
         }
@@ -34,14 +68,15 @@ app.post('/memos/create',async (req,res)=>{
         var doc = await memo.save();
         res.send(doc);
     }   catch (e) {
+        console.log('post /memos/create error. memo not saved. e: ', e);
         res.status(400).send(e);
     }   
 });
 //DELETE memo
-app.post('/memos/delete',async (req,res)=>{
+app.post('/memos/delete',authenticate,async (req,res)=>{
     try{
         var reqMemoId = req.body._id;
-        var req_creatorId = req.body._creatorId;
+        var req_creatorId = req.user._id;
         if(!ObjectId.isValid(reqMemoId)){
             return res.status(404).send('memo Id not valid');
         }
@@ -74,10 +109,11 @@ app.post('/memos/delete',async (req,res)=>{
 });
 
 //UPDATE memo
-app.post('/memos/update',async (req,res)=>{
+app.post('/memos/update',authenticate,async (req,res)=>{
     try{
         const body = req.body;
         body.date = new Date();
+        body._creatorId = req.user._id;
         console.log('***.memos/update/ body***', body);
     
         if(!ObjectId.isValid(body._id)){
@@ -129,7 +165,7 @@ var paging = async (myCollection, pagesToSkip, docsInPage) => {
 
 
 //GET all my memos
-app.get('/memos/:userId', async (req,res) => {
+app.get('/memos', authenticate, async (req,res) => {
     try{
         const categoryString = req.query.category;
         const pageNumber = Number(req.query.pageNum);
@@ -137,9 +173,9 @@ app.get('/memos/:userId', async (req,res) => {
         var category = categoryString? categoryString.split(',').map(Number) : categoryString;
         console.log('***server point 1');
         if (pageNumber === 0) {
-            await Memo.findMyMemos(req.params.userId, category);
+            await Memo.findMyMemos(req.user._id.toString(), category);
         }
-        var memos = await paging(req.params.userId, pageNumber, limit);
+        var memos = await paging(req.user._id.toString(), pageNumber, limit);
         res.send({memos});
     } catch (e) {
         res.status(400).send(e);
@@ -165,7 +201,7 @@ app.get('/memos/:userId', async (req,res) => {
 
 
     //GET my friends and my memos, around geopoint
-app.get('/allMemos/:userId', async (req,res) => {
+app.get('/allMemos', authenticate, async (req,res) => {
     try{
         
         const categoryString = req.query.category;
@@ -178,18 +214,18 @@ app.get('/allMemos/:userId', async (req,res) => {
         const limit = Number(req.query.limit);
        
         //find user friends
-        const friends = await User.getFriends(req.params.userId);
+        const friends = await User.getFriends(req.user._id.toString());
         console.log('***friends***',friends );
         if (!lat || !long || !distance){
             //for each of user friend find all public memos of user
             if (pageNumber === 0) {
-                await Memo.findManyUsersMemos(friends, category, req.params.userId);
+                await Memo.findManyUsersMemos(friends, category, req.user._id.toString());
             }  
-            var friendsMemos = await paging(req.params.userId, pageNumber, limit);
+            var friendsMemos = await paging(req.user._id.toString(), pageNumber, limit);
         } else {
             //for each of user friends find all public memos in 'distance' from 'long,lat' point
             console.log('found lat and long');
-            var friendsMemos = await Memo.findMemosByGeopoint(friends, category, lat, long, distance, isPrivate, req.params.userId);
+            var friendsMemos = await Memo.findMemosByGeopoint(friends, category, lat, long, distance, isPrivate, req.user._id.toString());
             console.log('***friendsMemos in server.js***' , friendsMemos);
         }
         res.send({friendsMemos});
@@ -200,49 +236,49 @@ app.get('/allMemos/:userId', async (req,res) => {
     
         
         
-app.post('/users/signup', appId2DbId, async (req, res) => {
+// app.post('/users/signup', appId2DbId, async (req, res) => {
 
-     try{
-         const body = req.body;
-         const user = new User(body);
-         await user.save();
-         var userIdFriends = {  _id: user._id,
-                                appFriends: user.appFriends,
-                                friends_id: user.friends_id,
-                                categories: categories
-                            };
-         res.send(userIdFriends);
-     } catch (e) {
-        errorToSend.errorCode =  400;
-        errorToSend.errorMessage = e.errmsg;
-         res.status(errorToSend.errorCode).send(errorToSend);
-     }
-});
+//      try{
+//          const body = req.body;
+//          const user = new User(body);
+//          await user.save();
+//          var userIdFriends = {  _id: user._id,
+//                                 appFriends: user.appFriends,
+//                                 friends_id: user.friends_id,
+//                                 categories: categories
+//                             };
+//          res.send(userIdFriends);
+//      } catch (e) {
+//         errorToSend.errorCode =  400;
+//         errorToSend.errorMessage = e.errmsg;
+//          res.status(errorToSend.errorCode).send(errorToSend);
+//      }
+// });
 
 
 //Login - existing user  get updated
-app.post('/users/login', appId2DbId,async (req,res)=> {
+// app.post('/users/login', appId2DbId,async (req,res)=> {
     
-    try{
-        const body = req.body;
-        const updatedUser = await User.findOneAndUpdate({appId: body.appId},{$set: body}, {new: true});
-        if (!updatedUser) {
-            errorToSend.errorCode =  404;
-            errorToSend.errorMessage = 'User not found';
-            return res.status(errorToSend.errorCode).send(errorToSend);
-        }
-        res.send({
-                    appFriends: updatedUser.appFriends, 
-                    _id: updatedUser._id,
-                    friends_id: updatedUser.friends_id,
-                    categories: categories
-                });
-    } catch (e) {
-        errorToSend.errorCode =  400;
-        errorToSend.errorMessage = e.errmsg;
-        res.status(400).send(errorToSend);
-    } 
-});
+//     try{
+//         const body = req.body;
+//         const updatedUser = await User.findOneAndUpdate({appId: body.appId},{$set: body}, {new: true});
+//         if (!updatedUser) {
+//             errorToSend.errorCode =  404;
+//             errorToSend.errorMessage = 'User not found';
+//             return res.status(errorToSend.errorCode).send(errorToSend);
+//         }
+//         res.send({
+//                     appFriends: updatedUser.appFriends, 
+//                     _id: updatedUser._id,
+//                     friends_id: updatedUser.friends_id,
+//                     categories: categories
+//                 });
+//     } catch (e) {
+//         errorToSend.errorCode =  400;
+//         errorToSend.errorMessage = e.errmsg;
+//         res.status(400).send(errorToSend);
+//     } 
+// });
 
 app.listen(port,() =>{
     console.log(`Started up at port ${port}`);
