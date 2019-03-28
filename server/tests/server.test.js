@@ -17,7 +17,7 @@ describe ('POST /auth/facebook/token', () => {
         var appId = '100';
         var fullName = 'Tal Snitzer';
         var appFriends = ['301011240225891', '710125477'];
-        var access_token = 'EAADARWWYjeQBAG91n78uGubWIt8AMy44VnfJZCZAdycDSiLhQGfNVIRykYAVP7aNfFlRqFIF0J29VQUiO9iKVecT4ras6vpTCAKBFQcpTK8CpHNn80tzslAH4fosIcF00F5q0G6lmf5DC6efxEd0UR3DB8w71BzzVmBQmbeOxe6OwHBkYRVbfzyCtCZCGy3TvePfdgntOrgmHloabfo';
+        var access_token = 'EAAiMIypgBDsBANRvZBnoUWDXYwJkrcfA7yoExfmZCwXlbE1UK03wVBfZBp8eIR0HenZBV90ZBx2VLoY7TV99fdTwc9ZBso7FWPj4z3j16Gcpr3ezDZBAsPlAO4q8KfhwvmFQKblg7xmvWYJzv0Y8a2xPqSy52ThOfeWzH2sWiC2kDYZAbfF77naWbROMFLaZBzxdk8KZCftr5x967wciFTXoeZB';
 
         request(app)
         .post('/auth/facebook/token')
