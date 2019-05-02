@@ -1,19 +1,36 @@
 require('../server/config/config.js');
 
 const _ = require('lodash');
+const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
+const multer = require('multer');
+const hbs = require('hbs');
 
 const {mongoose} = require('../db/mongoose.js');
 const {ObjectId} = require('mongodb');
 const {User} = require('../models/user.js');
 const {Memo, MemoSchema} = require('../models/memo');
+const {Image} = require('../models/image');
 const {appId2DbId} = require('./../server/middleware/conversion');
 const {categories} = require('./../models/category.js');
 const {createToken, generateToken, sendToken, authenticate, passport} = require('./../server/middleware/authentication');
 
 const app = express();
 const port = process.env.PORT;
+
+//Define paths for Express config
+const viewsPath = path.join(__dirname, '../templates/views') ;
+const partialsPath = path.join(__dirname, '../templates/partials')
+
+//Setup handlebars engine and views location
+app.set('view engine', 'hbs');                         //set allows to set a value for a given express setting.'key'-the setting name, 'value'
+                                                        //with hbs (handlebars) we can serve dynamic pages to browser
+app.set('views',viewsPath) ;                            //customise the views directory
+hbs.registerPartials(partialsPath);
+
+// Setup static directory to serve
+app.use(express.static(path.join(__dirname, '.. /public'))); //serve static pages to the browswe
 
 var errorToSend = {};
 
@@ -233,6 +250,45 @@ app.get('/allMemos', authenticate, async (req,res) => {
             res.status(400).send(e);
         }
     });
+
+
+//upload image
+
+    const upload = multer({
+
+    });
+
+    app.post('/image/upload', authenticate ,upload.single('image'), async (req, res) => {
+        var image = new Image({image: req.file.buffer});
+        await image.save();
+        res.send({id: image.id});
+    }, (error,req,res,next) => {
+        res.status(400).send({error: error.message});
+    });
+
+//serve image
+
+app.get('/memos/image/share/:imageId', async (req, res) => {
+    try{
+        const image = await Image.findById(req.params.imageId)
+
+        if (!image || !image.image) {
+            throw new Error('Image not found')
+        }
+
+        res.set('Content-Type', 'image/jpg')
+        res.send(image.image)
+    } catch (e) {
+        res.status(404).send({error: e.message})
+    }
+})
+
+app.get('/memos/sharePage/:imageId', (req, res) => {
+    res.render('share', {
+        img: req.params.imageId,
+        url: process.env.MEMO_URL
+    });
+})
     
         
         

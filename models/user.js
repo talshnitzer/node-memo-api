@@ -100,10 +100,10 @@ UserSchema.statics.findByToken = function (token)  {
         // return new Promise((resolve, reject) => {
         //     reject();
         // });
-        console.log('find by token decode error',e );
+        console.log('find by token - decode error',e );
         return Promise.reject(); //same as lines in comment above       
     }
-    console.log('find by token decoded, decoded.id, decoded._id: ', decoded, decoded.id, decoded._id);
+    console.log('find by token - decoded, decoded.id, decoded._id: ', decoded, decoded.id, decoded._id);
     return User.findOne({
         '_id': decoded._id,
         'token': token
