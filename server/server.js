@@ -36,6 +36,8 @@ var errorToSend = {};
 
 app.use(bodyParser.json());
 
+
+
 //POST memos
 //to add authentication of user
 //add getting _creatorId from authentication method
