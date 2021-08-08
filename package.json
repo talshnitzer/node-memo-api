@@ -9,7 +9,7 @@
     "geopoint": "^1.0.1",
     "hbs": "^4.0.4",
     "jsonwebtoken": "^8.5.0",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "mongodb": "^3.1.13",
     "mongoose": "^5.3.16",
     "multer": "^1.4.1",
