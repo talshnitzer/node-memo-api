@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "body-parser": "^1.18.3",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "geopoint": "^1.0.1",
     "hbs": "^4.0.4",
     "jsonwebtoken": "^8.5.0",
